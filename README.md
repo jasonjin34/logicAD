@@ -54,13 +54,13 @@ _Below is an example of how you can install all the relevant packages_
 # Source Packages
 
 ## Running / Training
-The config file is saved in `src/anomalib/models/sclipad/config.yaml`
+The config file is saved in `src/anomalib/models/logicad/config.yaml`
 ```bash
-python tools/train.py --config ./src/anomalib/models/sclipad/config.yaml
+python tools/train.py --config ./src/anomalib/models/logicad/config.yaml
 ```
 or
 ```bash
-python tools/train.py --model sclipad
+python tools/train.py --model logicad
 ```
 
 ## Acknowledges 

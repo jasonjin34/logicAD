@@ -93,7 +93,8 @@ class LogicadModel(nn.Module):
             x = x[0]
         template = self.reference_summation[0]
         text_summation = self.text_summation(x, template=template)
+        print(text_summation)
         embedding = self.text_embedding(input_text=text_summation)
         # calculate the similarity
-        score = cos_sim(embedding, self.reference_embedding[0])
+        score = 1 - cos_sim(embedding, self.reference_embedding[0])
         return score

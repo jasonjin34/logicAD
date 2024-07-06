@@ -123,7 +123,7 @@ def make_mvtec_loco_dataset(
         raise RuntimeError(msg)
 
     samples = DataFrame(samples_list, columns=["path", "split", "label", "image_folder", "image_path"])
-
+    
     # Replace validation to Split.VAL.value in the split column
     samples["split"] = samples["split"].replace("validation", Split.VAL.value)
 
