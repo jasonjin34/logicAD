@@ -3,12 +3,12 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-    <img src="assets/github_repo.png" alt="Logo" width="600" height="150">
+    <img src="assets/github_repo.png" alt="Logo" width="600" height="250">
   <h3 align="center">Logical Anomaly Detection</h3>
 </div>
 
 This is the official Logicial Anomaly Detection Algorithm
-developed by Qihui Feng, [Jin Er*](er.jin@lfb.rwth-aachen.de), Yongli Mou
+developed by [Jin Er*](er.jin@lfb.rwth-aachen.de), Qihui Feng, Yongli Mou
 
 ## Table of contents
 

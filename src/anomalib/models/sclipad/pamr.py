@@ -7,6 +7,7 @@ import torch.nn as nn
 
 from functools import partial
 
+
 #
 # Helper modules
 #
@@ -16,7 +17,7 @@ class LocalAffinity(nn.Module):
         super(LocalAffinity, self).__init__()
         self.dilations = dilations
         weight = self._init_aff()
-        self.register_buffer('kernel', weight)
+        self.register_buffer("kernel", weight)
 
     def _init_aff(self):
         # initialising the shift kernel
@@ -45,17 +46,18 @@ class LocalAffinity(nn.Module):
         self.weight_check = self.weight_check.type_as(x)
         assert torch.all(self.weight_check.eq(self.kernel))
 
-        B,K,H,W = x.size()
-        x = x.view(B*K,1,H,W)
+        B, K, H, W = x.size()
+        x = x.view(B * K, 1, H, W)
 
         x_affs = []
         for d in self.dilations:
-            x_pad = F.pad(x, [d]*4, mode='replicate')
+            x_pad = F.pad(x, [d] * 4, mode="replicate")
             x_aff = F.conv2d(x_pad, self.kernel, dilation=d)
             x_affs.append(x_aff)
 
         x_aff = torch.cat(x_affs, 1)
-        return x_aff.view(B,K,-1,H,W)
+        return x_aff.view(B, K, -1, H, W)
+
 
 class LocalAffinityCopy(LocalAffinity):
 
@@ -76,6 +78,7 @@ class LocalAffinityCopy(LocalAffinity):
 
         self.weight_check = weight.clone()
         return weight
+
 
 class LocalStDev(LocalAffinity):
 
@@ -105,15 +108,18 @@ class LocalStDev(LocalAffinity):
 
         return x.std(2, keepdim=True)
 
+
 class LocalAffinityAbs(LocalAffinity):
 
     def forward(self, x):
         x = super(LocalAffinityAbs, self).forward(x)
         return torch.abs(x)
 
+
 #
 # PAMR module
 #
+
 
 class PAMR(nn.Module):
     def __init__(self, num_iter=1, dilations=[1]):
@@ -129,8 +135,8 @@ class PAMR(nn.Module):
 
         # x: [BxKxHxW]
         # mask: [BxCxHxW]
-        B,K,H,W = x.size()
-        _,C,_,_ = mask.size()
+        B, K, H, W = x.size()
+        _, C, _, _ = mask.size()
 
         x_std = self.aff_std(x)
 

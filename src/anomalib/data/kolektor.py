@@ -16,7 +16,6 @@ Reference:
     Journal of Intelligent Manufacturing 31, no. 3 (2020): 759-776.
 """
 
-
 from __future__ import annotations
 
 import logging

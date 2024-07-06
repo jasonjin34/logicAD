@@ -1,4 +1,5 @@
 from pyswip import Prolog
+
 # Initialize Prolog
 prolog = Prolog()
 
@@ -29,9 +30,9 @@ print(query)  # Output: [{}] indicating the fact exists
 # prolog.assertz("contains(right, Nuts) :-  member(Nuts, [almonds, nuts])")
 # prolog.assertz("contains(right, granola)")
 # prolog.assertz("rightcorrect(X, Y, Z) :- contains(right, X), contains(right, Y), contains(right, Z)")
-# 
+#
 # prolog.assertz("correct(X, Y, A, B, C) :- leftcorrect(X, Y), rightcorrect(A, B, C)")
-# 
+#
 # objects = {
 #   "left": {
 #     "peach": 1,
@@ -43,11 +44,11 @@ print(query)  # Output: [{}] indicating the fact exists
 #     "almonds": 1
 #   }
 # }
-# 
-# 
+#
+#
 # check_fact("rightcorrect(nuts, banana, banana)")
 # # check_fact("correct(peach, two_tangerines, banana_chips, almonds)")
-# 
+#
 # # def convert_objects_to_prolog_query(objects):
 # #     "recursive function to convert objects to prolog query"
 # #     def number_to_string(number):
@@ -68,9 +69,9 @@ print(query)  # Output: [{}] indicating the fact exists
 # #         return query
 # #     query = convert_to_prolog(objects)
 # #     return query
-# # 
+# #
 # # query = convert_objects_to_prolog_query(objects["left"])
-# # 
+# #
 # # print(query)
-# 
-# 
+#
+#

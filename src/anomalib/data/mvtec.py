@@ -148,9 +148,9 @@ def make_mvtec_dataset(
 
     # assign mask paths to anomalous test images
     samples["mask_path"] = ""
-    samples.loc[
-        (samples.split == "test") & (samples.label_index == LabelName.ABNORMAL), "mask_path"
-    ] = mask_samples.image_path.values
+    samples.loc[(samples.split == "test") & (samples.label_index == LabelName.ABNORMAL), "mask_path"] = (
+        mask_samples.image_path.values
+    )
 
     # assert that the right mask files are associated with the right test images
     if len(samples.loc[samples.label_index == LabelName.ABNORMAL]):

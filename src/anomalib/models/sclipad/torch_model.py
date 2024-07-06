@@ -4,6 +4,7 @@ anomalib as general framework
 # This implementation is based on the following paper:
 # TODO my paper link archiv
 """
+
 import pdb
 import torch
 import torch.nn.functional as F
@@ -20,23 +21,19 @@ from .text_prompt import (
 
 from .sliding_windows import generate_sliding_windows
 
-from .utils import (
-    get_clip_encoders,
-    csa_attn,
-    key_smoothing,
-    get_dino_attn
-)
+from .utils import get_clip_encoders, csa_attn, key_smoothing, get_dino_attn
 
 
 class SCLIPADModel(nn.Module):
     """
     TODO: add text prompt reasoning status on going
     """
+
     def __init__(
         self,
         backbone: str = "ViT-B-16",
         pretrained: str = "laion400m_e32",
-        ckpt: str = None, # "./checkpoint/sd_epoch=0-step=300.ckpt",
+        ckpt: str = None,  # "./checkpoint/sd_epoch=0-step=300.ckpt",
         category: str = "wood",
         k_shot: int = 4,
         zero_shot: bool = True,
@@ -83,18 +80,18 @@ class SCLIPADModel(nn.Module):
         if text_adapter:
             embedding_dim = self.model.visual.output_dim
             self.text_linear = torch.nn.Sequential(
-                torch.nn.Linear(embedding_dim, embedding_dim//4, bias=False),
+                torch.nn.Linear(embedding_dim, embedding_dim // 4, bias=False),
                 torch.nn.ReLU(inplace=True),
-                torch.nn.Linear(embedding_dim//4, embedding_dim, bias=False),
+                torch.nn.Linear(embedding_dim // 4, embedding_dim, bias=False),
                 torch.nn.ReLU(inplace=True),
             )
             self.text_quotient = nn.Parameter(torch.ones([]) * text_adapter)
         if image_adapter:
             embedding_dim = self.model.visual.output_dim
             self.image_linear = torch.nn.Sequential(
-                torch.nn.Linear(embedding_dim, embedding_dim//4, bias=False),
+                torch.nn.Linear(embedding_dim, embedding_dim // 4, bias=False),
                 torch.nn.ReLU(inplace=True),
-                torch.nn.Linear(embedding_dim//4, embedding_dim, bias=False),
+                torch.nn.Linear(embedding_dim // 4, embedding_dim, bias=False),
                 torch.nn.ReLU(inplace=True),
             )
             self.image_quotient = nn.Parameter(torch.ones([]) * image_adapter)
@@ -103,25 +100,30 @@ class SCLIPADModel(nn.Module):
             pretrained_encoder = torch.load(ckpt)
             # change key name and add absent key
             pretrained_encoder = {
-                k[4:] if k.startswith("net.") else k: pretrained_encoder[k] for k in pretrained_encoder.keys()}
+                k[4:] if k.startswith("net.") else k: pretrained_encoder[k] for k in pretrained_encoder.keys()
+            }
             split_params, split_layers = {}, {}
             for key in pretrained_encoder:
                 if key.startswith("split_layers"):
                     layer_num = key.split(".")[1].split("_")[1]
                     if "visual_" + layer_num not in split_layers:
-                        split_layers["visual_" + layer_num] = copy.deepcopy(self.model.visual.transformer.resblocks[int(layer_num)])
+                        split_layers["visual_" + layer_num] = copy.deepcopy(
+                            self.model.visual.transformer.resblocks[int(layer_num)]
+                        )
                 if key.startswith("split_params"):
                     name = key.split(".")[1]
                     if name not in split_params:
                         split_params[name] = copy.deepcopy(self.model.visual.proj)
-            if split_layers: self.split_layers = nn.ModuleDict(split_layers)
-            if split_params: self.split_params = nn.ParameterDict(split_params)
+            if split_layers:
+                self.split_layers = nn.ModuleDict(split_layers)
+            if split_params:
+                self.split_params = nn.ParameterDict(split_params)
             self.load_state_dict(pretrained_encoder, strict=False)
             self.eval()
         # text tower might have been altered in training, therefore build text classifier after ckpt loading
         self.text_features = torch.nn.Parameter(self.build_text_classifier(), requires_grad=False)
         self.register_buffer("ref_image_features", None)
-        
+
         # assign sliding window size, size depends
         self.window_size = self.clip_config["vision_cfg"]["image_size"]
         self.patch_size = self.clip_config["vision_cfg"]["patch_size"]
@@ -183,7 +185,7 @@ class SCLIPADModel(nn.Module):
             # assign weights
             conv1.weight = conv_weight
         return conv1
-    
+
     @torch.no_grad()
     def image_encoder_timm(self, x, normalize=True):
         vit = self.model.visual.trunk.eval()
@@ -191,27 +193,19 @@ class SCLIPADModel(nn.Module):
         x, rot_pos_embed = vit._pos_embed(x)
         resblocks = vit.blocks
 
-        for block in resblocks[:self.feature_layer]:
+        for block in resblocks[: self.feature_layer]:
             x = block(x, rot_pos_embed)
 
-        for block in resblocks[self.feature_layer:]:
+        for block in resblocks[self.feature_layer :]:
             if self.isCSA:
-                csa_x = x + csa_attn(
-                    block, 
-                    block.norm1(x), 
-                    istimm=True, 
-                    attn_logit_scale=self.attn_logit_scale
-                )
+                csa_x = x + csa_attn(block, block.norm1(x), istimm=True, attn_logit_scale=self.attn_logit_scale)
                 csa_x = csa_x + block.mlp(block.norm2(csa_x))
 
                 if hasattr(self, "split_layers") and "visual_11" in self.split_layers:
                     split_block = self.split_layers["visual_11"]
                     split_x = x + csa_attn(
-                        split_block, 
-                        split_block.norm1(x), 
-                        istimm=self.istimm, 
-                        attn_logit_scale=self.attn_logit_scale
-                    ) 
+                        split_block, split_block.norm1(x), istimm=self.istimm, attn_logit_scale=self.attn_logit_scale
+                    )
                     split_x = split_x + split_block.mlp(split_block.norm2(split_x))
 
                 if self.clsCSA:
@@ -234,14 +228,12 @@ class SCLIPADModel(nn.Module):
         """ Apply MaskCLIP key smoothing on patch tokens"""
         x[:, 1:, :] = key_smoothing(x[:, 1:, :]) if key_smoothing else x[:, 1:, :]
         x = F.normalize(x, dim=-1, p=2) if normalize else x
-        return {
-            "cls": x[:, 0, :],
-            "tokens": x[:, 1:, :]
-        }
+        return {"cls": x[:, 0, :], "tokens": x[:, 1:, :]}
 
-    '''
+    """
         Taken from https://github.com/wusize/CLIPSelf/blob/main/src/open_clip/eva_clip/eva_vit_model.py#L588
-    '''
+    """
+
     @torch.no_grad()
     def image_encoder_clipselfeva(self, x, normalize=True):
         vit = self.model.visual
@@ -260,25 +252,22 @@ class SCLIPADModel(nn.Module):
         # a patch_dropout of 0. would mean it is disabled and this function would do nothing but return what was passed in
         import os
         from functools import partial
-        if os.getenv('RoPE') == '1':
+
+        if os.getenv("RoPE") == "1":
             vit.rope.forward = partial(vit.rope.forward, patch_indices_keep=None)
             x = vit.patch_dropout(x)
         else:
             x = vit.patch_dropout(x)
 
         rel_pos_bias = vit.rel_pos_bias() if vit.rel_pos_bias is not None else None
-        if rel_pos_bias: raise NotImplementedError
-        for blk in vit.blocks[:self.feature_layer]:
+        if rel_pos_bias:
+            raise NotImplementedError
+        for blk in vit.blocks[: self.feature_layer]:
             x = blk(x, rel_pos_bias=rel_pos_bias)
 
-        for blk in vit.blocks[self.feature_layer:]:
+        for blk in vit.blocks[self.feature_layer :]:
             if self.isCSA:
-                csa_x = x + csa_attn(
-                    blk, 
-                    blk.norm1(x), 
-                    isclipselfeva=True,
-                    attn_logit_scale=self.attn_logit_scale
-                )
+                csa_x = x + csa_attn(blk, blk.norm1(x), isclipselfeva=True, attn_logit_scale=self.attn_logit_scale)
                 csa_x = csa_x + blk.mlp(blk.norm2(csa_x))
                 x = csa_x
                 if not self.clsCSA:
@@ -289,10 +278,7 @@ class SCLIPADModel(nn.Module):
         if normalize:
             x = vit.norm(x)
         x = vit.head(x)
-        return {
-            "cls": x[:, 0, :],
-            "tokens": x[:, 1:, :]
-        }
+        return {"cls": x[:, 0, :], "tokens": x[:, 1:, :]}
 
     @torch.no_grad()
     def image_encoder(self, x, normalize=True):
@@ -302,14 +288,18 @@ class SCLIPADModel(nn.Module):
         """
         vit = self.model.visual.eval()
         w, h = x.shape[-2:]
-        x = SCLIPADModel.get_conv1(
-            vit=vit, patch_size=self.patch_size, stride=self.patch_size)(x)
+        x = SCLIPADModel.get_conv1(vit=vit, patch_size=self.patch_size, stride=self.patch_size)(x)
         x = x.reshape(x.shape[0], x.shape[1], -1)
         x = x.permute(0, 2, 1)
         # class embedding and positional embeddings
         x = torch.cat(
-            [vit.class_embedding.to(x.dtype) + torch.zeros(x.shape[0], 1, x.shape[-1], dtype=x.dtype, device=x.device),
-             x], dim=1)  # shape = [*, grid ** 2 + 1, width]
+            [
+                vit.class_embedding.to(x.dtype)
+                + torch.zeros(x.shape[0], 1, x.shape[-1], dtype=x.dtype, device=x.device),
+                x,
+            ],
+            dim=1,
+        )  # shape = [*, grid ** 2 + 1, width]
         if x.shape[1] != vit.positional_embedding.shape[0]:
             x = x + self.interpolate_pos_encoding(x, w, h)
         else:
@@ -320,16 +310,16 @@ class SCLIPADModel(nn.Module):
 
         resblocks = vit.transformer.resblocks
 
-        for block in resblocks[:self.feature_layer]:
-            x = block(x) 
+        for block in resblocks[: self.feature_layer]:
+            x = block(x)
 
         """ Applying Self Attention Module in the last attention block """
-        for block in resblocks[self.feature_layer:]:
+        for block in resblocks[self.feature_layer :]:
             if self.isCSA:
                 csa_x = x + csa_attn(
-                    block, 
-                    block.ln_1(x), 
-                    istimm=False, 
+                    block,
+                    block.ln_1(x),
+                    istimm=False,
                     attn_logit_scale=self.attn_logit_scale,
                 )
                 csa_x = csa_x + block.mlp(block.ln_2(csa_x))
@@ -337,11 +327,8 @@ class SCLIPADModel(nn.Module):
                 if hasattr(self, "split_layers") and "visual_11" in self.split_layers:
                     split_block = self.split_layers["visual_11"]
                     split_x = x + csa_attn(
-                        split_block, 
-                        split_block.ln_1(x), 
-                        istimm=self.istimm, 
-                        attn_logit_scale=self.attn_logit_scale
-                    ) 
+                        split_block, split_block.ln_1(x), istimm=self.istimm, attn_logit_scale=self.attn_logit_scale
+                    )
                     split_x = split_x + split_block.mlp(split_block.ln_2(split_x))
                 if self.clsCSA:
                     x[0:1, ...] = csa_x[0:1, ...]
@@ -362,30 +349,23 @@ class SCLIPADModel(nn.Module):
         if self.image_adapter:
             x = F.normalize(x, dim=-1, p=2)
             iq = torch.clamp(self.image_quotient, min=self.image_adapter, max=1.0)
-            x[:, 1:, :] = iq * self.image_linear(x[:, 1:, :]) + (1-iq)*x[:, 1:, :]
+            x[:, 1:, :] = iq * self.image_linear(x[:, 1:, :]) + (1 - iq) * x[:, 1:, :]
 
         """ Apply MaskCLIP key smoothing on patch tokens"""
         if self.apply_key_smoothing:
             x[:, 1:, :] = key_smoothing(x[:, 1:, :])
         if normalize:
             x = F.normalize(x, dim=-1, p=2)
-        return {
-            "cls": x[:, 0, :],
-            "tokens": x[:, 1:, :]
-        }
+        return {"cls": x[:, 0, :], "tokens": x[:, 1:, :]}
 
     @torch.no_grad()
-    def text_encoder(
-        self,
-        text: Tensor,
-        normalize: bool = True
-    ):
+    def text_encoder(self, text: Tensor, normalize: bool = True):
         model = self.model.eval()
         text_features = model.encode_text(text)
         if self.text_adapter:
             text_features = F.normalize(text_features, dim=-1, p=2)
             tq = torch.clamp(self.text_quotient, min=self.text_adapter, max=1.0)
-            text_features = tq * self.text_linear(text_features) + (1-tq)*text_features
+            text_features = tq * self.text_linear(text_features) + (1 - tq) * text_features
 
         if normalize:
             text_features = F.normalize(text_features, dim=-1, p=2)
@@ -396,6 +376,7 @@ class SCLIPADModel(nn.Module):
         """
         Build zero-shot classifier with provided text-prompt
         """
+
         def _process_template(state_level_templates):
             text = []
             for template in TEMPLATE_LEVEL_PROMPTS:
@@ -407,6 +388,7 @@ class SCLIPADModel(nn.Module):
             mean_class_embeddings = torch.mean(class_embeddings, dim=0, keepdim=True)
             mean_class_embeddings = F.normalize(mean_class_embeddings, dim=-1)
             return mean_class_embeddings
+
         normal_text_embedding = _process_template(STATE_LEVEL_NORMAL_PROMPTS)
         abnormal_text_embedding = _process_template(STATE_LEVEL_ABNORMAL_PROMPTS)
         return torch.cat([normal_text_embedding, abnormal_text_embedding], dim=0)
@@ -429,11 +411,13 @@ class SCLIPADModel(nn.Module):
         text_logic: bool = False,
     ):
         """generating patch-wise abnormal score"""
+
         def img_text_similarity(img_patches):
-            logit_patches = (img_patches @ self.text_features.T)
+            logit_patches = img_patches @ self.text_features.T
             logit_patches = (self.logit_scale * logit_patches).softmax(dim=-1)
             logit_patches = logit_patches.transpose(1, -1)
             return logit_patches
+
         if with_text:
             logit_patches = img_text_similarity(img_patches)
         else:
@@ -443,7 +427,7 @@ class SCLIPADModel(nn.Module):
             logit_patches = img_patches @ ref_patches.T
             if text_logic:
                 # [B, L, D], [D, 2] = [B, L, 2] -> [B, L]
-                logit_patches_weights = F.softmax(img_patches@ self.text_features.T, dim=-1)[..., 1:]
+                logit_patches_weights = F.softmax(img_patches @ self.text_features.T, dim=-1)[..., 1:]
                 logit_patches = logit_patches * logit_patches_weights
             logit_patches_val, _ = logit_patches.topk(k=self.few_shot_topk, dim=-1)
             logit_patches = logit_patches_val.mean(dim=-1)
@@ -465,7 +449,7 @@ class SCLIPADModel(nn.Module):
         return logits_image
 
     def sim2mask(self, x, simmap):
-        mask = F.interpolate(simmap, x.shape[2:], mode='bilinear')
+        mask = F.interpolate(simmap, x.shape[2:], mode="bilinear")
         return mask
 
     def generate_mask_weights(self, x, window_size=None):
@@ -478,25 +462,22 @@ class SCLIPADModel(nn.Module):
             window_size = self.window_size
 
         output = generate_sliding_windows(
-            x=x,
-            patch_size=self.patch_size,
-            stride=self.sliding_window_stride,
-            window_size=window_size
+            x=x, patch_size=self.patch_size, stride=self.sliding_window_stride, window_size=window_size
         )
         mask, weights = output["mask"], output["weights"]
         return mask, weights
-    
+
     def features_extraction_windows(
-        self, 
-        x, 
-        batch_size, 
-        stride=112, 
-        window=224, 
+        self,
+        x,
+        batch_size,
+        stride=112,
+        window=224,
         rescale=True,
     ):
         assert len(x.shape) == 4
         x_windows = x.unfold(2, window, stride).unfold(3, window, stride)
-        x_windows = rearrange(x_windows,  "b c nw nh w h -> (b nw nh) c w h") # [B, Num_Win, C, W, H]
+        x_windows = rearrange(x_windows, "b c nw nh w h -> (b nw nh) c w h")  # [B, Num_Win, C, W, H]
 
         # extract image features from sliding windows
         list_img_cls, list_img_patches = self.image_features_extraction(x_windows)
@@ -514,7 +495,7 @@ class SCLIPADModel(nn.Module):
             list_img_cls = cls[:, None, ...]
         list_img_patches = rearrange(list_img_patches, "(b n) l d -> b n l d", b=batch_size)
         return list_img_cls, list_img_patches
-    
+
     def _generate_sliding_simmap_ascore(self, x):
         """
         TODO this part of the code need more explanation
@@ -526,7 +507,8 @@ class SCLIPADModel(nn.Module):
         window_size = self.window_size if self.apply_sliding_windows else x.shape[-1]
         # [B, N, D], [B, N, L, D]
         img_cls, img_patches = self.features_extraction_windows(
-            x, batch_size=batch_size, stride=self.window_size // 2, window=window_size)
+            x, batch_size=batch_size, stride=self.window_size // 2, window=window_size
+        )
         # [number of sliding windows, L^hat] L^hat for the sliding window
         masks, weights = self.generate_mask_weights(x, window_size=window_size)
 
@@ -573,8 +555,9 @@ class SCLIPADModel(nn.Module):
                 anomaly_score = weighted_window_logit.topk(3, dim=1, largest=True)[0].mean(dim=1)
             elif self.cls_type_windows == "ensemble":
                 # combined method max with logit
-                anomaly_score = anomaly_score.max(dim=-1)[0] + \
-                    weighted_window_logit.topk(3, dim=1, largest=True)[0].mean(dim=1)
+                anomaly_score = anomaly_score.max(dim=-1)[0] + weighted_window_logit.topk(3, dim=1, largest=True)[
+                    0
+                ].mean(dim=1)
             else:
                 raise NotImplementedError("Unknown cls window type")
 
@@ -586,7 +569,7 @@ class SCLIPADModel(nn.Module):
             max_patch_logit = simmap_reshape.topk(self.few_shot_topk, dim=-1)[0].mean(dim=-1, keepdim=True)
             anomaly_score = max_patch_logit.squeeze()
 
-        return simmap[:, None, ...],  anomaly_score
+        return simmap[:, None, ...], anomaly_score
 
     def build_image_classifier(self, images):
         """
@@ -597,7 +580,8 @@ class SCLIPADModel(nn.Module):
         window_size = self.window_size if self.apply_sliding_windows else width
         # [batch_size, num_of_sliding_windows, L, D]
         _, img_features_memory_bank = self.features_extraction_windows(
-            images, batch_size=batch_size, window=window_size, stride=self.window_size // 2)
+            images, batch_size=batch_size, window=window_size, stride=self.window_size // 2
+        )
         if self.ref_image_features:
             self.ref_image_features = torch.cat((self.ref_image_features, img_features_memory_bank), dim=0)
         else:
@@ -606,7 +590,4 @@ class SCLIPADModel(nn.Module):
     def forward(self, x):
         anomaly_map, anomaly_score = self._generate_sliding_simmap_ascore(x)
         anomaly_map = self.sim2mask(x, anomaly_map)
-        return {
-            "anomaly_map": anomaly_map,
-            "anomaly_score": anomaly_score
-        }
+        return {"anomaly_map": anomaly_map, "anomaly_score": anomaly_score}

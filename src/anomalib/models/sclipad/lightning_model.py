@@ -17,6 +17,7 @@ class Sclipad(AnomalyModule):
     """
     SCLIPADLightning Module to train SCLIP based Anomaly Detection algorithm
     """
+
     def __init__(
         self,
         backbone: str = "ViT-B-16",
@@ -36,7 +37,6 @@ class Sclipad(AnomalyModule):
         text_adapter: float = 0.0,
         image_adapter: float = 0.0,
         attn_logit_scale: float = 100,
-
     ) -> None:
         super().__init__()
 
@@ -57,11 +57,11 @@ class Sclipad(AnomalyModule):
             apply_sliding_windows=apply_sliding_windows,
             text_adapter=text_adapter,
             image_adapter=image_adapter,
-            attn_logit_scale=attn_logit_scale
+            attn_logit_scale=attn_logit_scale,
         )
 
         self.k_shot = k_shot
-        self.reference_images : list[Tensor] = []
+        self.reference_images: list[Tensor] = []
 
     def configure_optimizers(self) -> None:
         """Configure optimizers.
@@ -81,12 +81,12 @@ class Sclipad(AnomalyModule):
             dict[str, np.ndarray]: Embedding Vector
         """
         del args, kwargs
-        x = (batch["image"])
+        x = batch["image"]
         self.reference_images.append(x)
 
     def on_validation_start(self) -> None:
         ref_img = torch.cat(self.reference_images, dim=0)
-        ref_img = ref_img[torch.randperm(ref_img.shape[0])[:self.k_shot]]
+        ref_img = ref_img[torch.randperm(ref_img.shape[0])[: self.k_shot]]
         self.model.build_image_classifier(ref_img)
 
     def validation_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> STEP_OUTPUT:
@@ -137,9 +137,7 @@ class SclipadLightning(Sclipad):
             apply_sliding_windows=hparams.model.apply_sliding_windows,
             text_adapter=hparams.model.text_adapter,
             image_adapter=hparams.model.image_adapter,
-            attn_logit_scale=hparams.model.attn_logit_scale
+            attn_logit_scale=hparams.model.attn_logit_scale,
         )
         self.hparams: DictConfig | ListConfig  # type: ignore
         self.save_hyperparameters(hparams)
-
-

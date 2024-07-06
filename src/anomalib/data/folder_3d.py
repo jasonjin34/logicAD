@@ -106,9 +106,9 @@ def make_folder3d_dataset(
     samples = samples.sort_values(by="image_path", ignore_index=True)
 
     # Create label index for normal (0) and abnormal (1) images.
-    samples.loc[
-        (samples.label == DirType.NORMAL) | (samples.label == DirType.NORMAL_TEST), "label_index"
-    ] = LabelName.NORMAL
+    samples.loc[(samples.label == DirType.NORMAL) | (samples.label == DirType.NORMAL_TEST), "label_index"] = (
+        LabelName.NORMAL
+    )
     samples.loc[(samples.label == DirType.ABNORMAL), "label_index"] = LabelName.ABNORMAL
     samples.label_index = samples.label_index.astype("Int64")
 

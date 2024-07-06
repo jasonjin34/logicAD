@@ -5,6 +5,7 @@ including followings:
 2. ViT-B-16-plus-240
 3. EVA02-B-16
 """
+
 import re
 import pdb
 import torch
@@ -19,26 +20,28 @@ except:
 
 import torch.nn.functional as F
 
+
 def get_dino_encoders(backbone: str = "ViT-L-14"):
     if backbone == "ViT-B-16":
-        model = torch.hub.load('facebookresearch/dino:main', "dino_vitb16")
+        model = torch.hub.load("facebookresearch/dino:main", "dino_vitb16")
     elif backbone == "ViT-L-14":
-        model = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14')        
+        model = torch.hub.load("facebookresearch/dinov2", "dinov2_vitl14")
     else:
         raise ValueError("Backbone not supported, only support ViT-B-16 and ViT-L-14 for now.")
     return model.eval()
+
 
 @torch.no_grad()
 def get_dino_attn(x):
     vit = get_dino_encoders().cuda()
     B, nc, w, h = x.shape
-    x = vit.patch_embed(x) 
+    x = vit.patch_embed(x)
     cls_tokens = vit.cls_token.expand(B, -1, -1)
     x = torch.cat((cls_tokens, x), dim=1)
     x = x + vit.interpolate_pos_encoding(x, w, h)
     for blk in vit.blocks[:-1]:
         x = blk(x)
-    block = vit.blocks[-1] 
+    block = vit.blocks[-1]
     x = block.norm1(x)
     B, N, C = x.shape
     attn = block.attn
@@ -49,24 +52,22 @@ def get_dino_attn(x):
     output_attn = output_attn_q.softmax(dim=-1) + output_attn_k.softmax(dim=-1)
     return output_attn
 
-def get_clip_encoders(
-    backbone: str = 'ViT-B-16',
-    pretrained: str = 'laion400m_e32'
-):
+
+def get_clip_encoders(backbone: str = "ViT-B-16", pretrained: str = "laion400m_e32"):
     """
     extracted the pretrained clip model, tokenizer and hyperparameters setting
     """
     if backbone.startswith("EVA02-CLIP"):
-       _clip = eva_clip
+        _clip = eva_clip
     else:
         _clip = open_clip
     try:
         if backbone.startswith("EVA02-CLIP"):
             model, _, preprocess = _clip.create_model_and_transforms(
-                backbone, pretrained, force_custom_clip=True, device="cuda")
+                backbone, pretrained, force_custom_clip=True, device="cuda"
+            )
         else:
-            model, _, preprocess = _clip.create_model_and_transforms(
-                backbone, pretrained)
+            model, _, preprocess = _clip.create_model_and_transforms(backbone, pretrained)
     except Exception as e:
         print(f"Error {e}, select the correct pretrained model")
     # change clip image encoder hyperparameters for few-shot learning
@@ -81,7 +82,7 @@ def get_clip_encoders(
         "preprocess": preprocess,
         "tokenizer": tokenizer,
         "logit_scale": logit_scale,
-        "clip_config": clip_config
+        "clip_config": clip_config,
     }
 
     timm = check_timm_image_encoder(output_dict)
@@ -92,11 +93,12 @@ def get_clip_encoders(
     if timm:
         patch_size = [14, 16, 32]
         for patch in patch_size:
-            if f"-{patch}"in backbone:
+            if f"-{patch}" in backbone:
                 clip_config["vision_cfg"]["patch_size"] = patch
                 break
     output_dict["clip_config"] = clip_config
     return output_dict
+
 
 def key_smoothing(x):
     atten = x @ x.transpose(1, -1)  # B L L
@@ -104,12 +106,13 @@ def key_smoothing(x):
     x = atten @ x
     return x
 
+
 def concat_csa_att(resblock, x, istimm=False):
     attn = resblock.attn
     num_heads = attn.num_heads
     _, B, E = x.size()
     head_dim = E // num_heads
-    scale = head_dim ** -0.5
+    scale = head_dim**-0.5
     if istimm:
         q = attn.q_proj(x)
         k = attn.q_proj(x)
@@ -125,7 +128,9 @@ def concat_csa_att(resblock, x, istimm=False):
     k_attn = k @ k.transpose(1, 2) * scale
     v_attn = v @ v.transpose(1, 2) * scale
     qk_attn = q @ k.transpose(1, 2) * scale
-    attn_weights = F.softmax(q_attn, dim=-1) + F.softmax(k_attn, dim=-1) + F.softmax(v_attn, dim=-1) + F.softmax(qk_attn, dim=-1)
+    attn_weights = (
+        F.softmax(q_attn, dim=-1) + F.softmax(k_attn, dim=-1) + F.softmax(v_attn, dim=-1) + F.softmax(qk_attn, dim=-1)
+    )
     attn_output = attn_weights @ v
     attn_output = attn_output.transpose(0, 1).contiguous().view(-1, B, E)  # [L, B, E]
 
@@ -137,16 +142,17 @@ def concat_csa_att(resblock, x, istimm=False):
         attn_output = attn.out_proj(attn_output)
     return attn_output
 
+
 def csa_attn(
-    resblock, 
-    x, 
-    istimm=False, 
+    resblock,
+    x,
+    istimm=False,
     isclipselfeva=False,
-    attn_logit_scale = None,
+    attn_logit_scale=None,
     attn_dino=None,
 ):
     """
-    TODO: clean this part of code, make it more modules 
+    TODO: clean this part of code, make it more modules
     x input shape for timm model is [B, L, E]
     x input shape for non-timm model is [L, B, E]
     """
@@ -155,7 +161,7 @@ def csa_attn(
     if istimm:
         B, N, C = x.shape
         head_dim = C // num_heads
-        scale = head_dim ** -0.5
+        scale = head_dim**-0.5
         q = attn.q_proj(x).reshape(B, N, num_heads, -1).transpose(1, 2)  # B, num_heads, N, head_dim
         k = attn.k_proj(x).reshape(B, N, num_heads, -1).transpose(1, 2)
         v = attn.v_proj(x).reshape(B, N, num_heads, -1).transpose(1, 2)
@@ -172,15 +178,15 @@ def csa_attn(
         x = attn.norm(x)
         attn_output = attn.proj(x)
     elif isclipselfeva:
-        '''
-            cf https://github.com/wusize/CLIPSelf/blob/main/src/open_clip/eva_clip/eva_vit_model.py#L174
-        '''
+        """
+        cf https://github.com/wusize/CLIPSelf/blob/main/src/open_clip/eva_clip/eva_vit_model.py#L174
+        """
         B, N, C = x.shape
         q = F.linear(input=x, weight=attn.q_proj.weight, bias=attn.q_bias)
         k = F.linear(input=x, weight=attn.k_proj.weight, bias=None)
         v = F.linear(input=x, weight=attn.v_proj.weight, bias=attn.v_bias)
 
-        q = q.reshape(B, N, attn.num_heads, -1).permute(0, 2, 1, 3)     # B, num_heads, N, head_dim
+        q = q.reshape(B, N, attn.num_heads, -1).permute(0, 2, 1, 3)  # B, num_heads, N, head_dim
         k = k.reshape(B, N, attn.num_heads, -1).permute(0, 2, 1, 3)
         v = v.reshape(B, N, attn.num_heads, -1).permute(0, 2, 1, 3)
 
@@ -210,7 +216,7 @@ def csa_attn(
     else:
         L, B, E = x.size()
         head_dim = E // num_heads
-        scale = head_dim ** -0.5
+        scale = head_dim**-0.5
         qkv = F.linear(x, attn.in_proj_weight, attn.in_proj_bias)
         q, k, v = qkv.chunk(3, dim=-1)  # [L, B, E]
         q = q.contiguous().view(-1, B * num_heads, head_dim).transpose(0, 1)
@@ -220,7 +226,7 @@ def csa_attn(
             scale = scale * attn_logit_scale
         q_attn = q @ q.transpose(1, 2) * scale  # [B * num_head, L, L]
         k_attn = k @ k.transpose(1, 2) * scale
-        # qk_attn = q @ k.transpose(1, 2) * scale
+        # qk_attn = q @ k.transpose(1, 2) * scale
         # attn_weights = F.softmax(q_attn, dim=-1) + F.softmax(k_attn, dim=-1) + F.softmax(qk_attn, dim=-1)
         attn_weights = F.softmax(q_attn, dim=-1) + F.softmax(k_attn, dim=-1)
 
@@ -232,6 +238,7 @@ def csa_attn(
         attn_output = attn.out_proj(attn_output)
     return attn_output
 
+
 def check_timm_image_encoder(config):
     config_json = config["clip_config"]
     vision_cfg = config_json["vision_cfg"]
@@ -239,6 +246,7 @@ def check_timm_image_encoder(config):
         if "timm" in key:
             return True
     return False
+
 
 def main(args):
     clip_init = get_clip_encoders(args.backbone, args.pretrained)
@@ -249,12 +257,13 @@ def main(args):
     else:
         print("Not timm image encoder")
 
+
 if __name__ == "__main__":
-    # args = argparse.ArgumentParser()
-    # args.add_argument("--backbone", type=str, default="EVA02-L-14")
-    # args.add_argument("--pretrained", type=str, default="merged2b_s4b_b131k")
-    # args = args.parse_args()
-    # main(args)
+    # args = argparse.ArgumentParser()
+    # args.add_argument("--backbone", type=str, default="EVA02-L-14")
+    # args.add_argument("--pretrained", type=str, default="merged2b_s4b_b131k")
+    # args = args.parse_args()
+    # main(args)
     x = torch.randn(2, 3, 224, 224)
     vitb16 = get_dino_encoders()
     get_dino_attn(vitb16, x)
