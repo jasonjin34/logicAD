@@ -4,11 +4,26 @@ import requests
 import json
 import os
 from openai import OpenAI
+import torch
 
 from numpy import dot
 import numpy as np
 from numpy.linalg import norm
+from typing import Union
+from PIL import Image
+import io
 
+def image2base64(image: Union[np.ndarray, Image.Image], image_format: str = "JPEG", quality: int = 100) -> str:
+    if isinstance(image, np.ndarray):
+        im = Image.fromarray(image)
+    elif isinstance(image, Image.Image):
+        im = image
+    else:
+        raise ValueError(f"image should be np.ndarray or PIL.Image, not {type(image)}")
+
+    buffered = io.BytesIO()
+    im.save(buffered, format=image_format, quality=quality)
+    return base64.b64encode(buffered.getvalue()).decode("utf-8")
 
 def cos_sim(a, b):
     if isinstance(a, list):
@@ -29,15 +44,25 @@ def key_extraction(file_path):
 
 
 # Function to encode the image
-def encode_image(image_path):
-    with open(image_path, "rb") as image_file:
-        img = image_file.read()
-        img = base64.b64encode(img).decode("utf-8")
-        return img
+def encode_image(image, image_format="png"):
+    """
+    convert the code to base64
+    """
+    if isinstance(image, str): # if the image is a path
+        image_path = image
+        with open(image_path, "rb") as image_file:
+            img = image_file.read()
+            img = base64.b64encode(img).decode("utf-8")
+    else: # if the image is a numpy array or tensor
+        if isinstance(image, torch.Tensor):
+            # convert B, C, H, W to  H, W, C as numpy format
+            image = image.squeeze(0).permute(1, 2, 0).numpy()
+        img = image2base64(image, image_format=image_format)
+    return img
 
 
 def img2text(
-    image_path,
+    image,
     api_key,
     model="gpt-4o",
     query="How many pushpins are there?",
@@ -46,11 +71,14 @@ def img2text(
     image text extracton using LLM model, so far only support gpt-4o model
     # TODO
     # add other LLM model, particular for some small model for the ablation study
+
+    args:
+        image: str, path to the image, numpy array or tensor
     """
 
     api_key = key_extraction(api_key)
     # Getting the base64 string
-    base64_image = encode_image(image_path)
+    base64_image = encode_image(image)
 
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
 
@@ -120,3 +148,4 @@ def txt2sum(
     except Exception as e:
         output = None
     return output
+

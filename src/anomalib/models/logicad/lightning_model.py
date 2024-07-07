@@ -53,7 +53,6 @@ class Logicad(AnomalyModule):
 
     def on_validation_start(self) -> None:
         # select reference image
-        random.shuffle(self.reference_images)
         self.reference_images = self.reference_images[: self.k_shot]
         for path in self.reference_images:
             # get list logic summation text of reference images
@@ -62,6 +61,7 @@ class Logicad(AnomalyModule):
             embedding = self.model.text_embedding(input_text=text_summation)
             self.reference_embedding.append(embedding)
         self.model.init_reference(self.reference_summation, self.reference_embedding)
+        print("Reference images: ", self.reference_summation)
         
     def validation_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> STEP_OUTPUT:
         """Get batch of anomaly maps from input image batch.
