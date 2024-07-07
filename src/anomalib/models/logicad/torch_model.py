@@ -2,13 +2,10 @@
 This is official Logic Anomaly Detection with LLM implementation by using Pytorch, Pytorch-Lightning and
 anomalib as general framework
 """
-import pdb
-import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
-from einops import rearrange
-import copy, math
 
+from .utils import init_json, update_json
 
 from .text_prompt import (
     TEXT_EXTRACTOR_PROMPTS,
@@ -41,6 +38,8 @@ class LogicadModel(nn.Module):
         self.model_embedding = model_embedding
         self.reference_embedding = None
         self.reference_summation = None
+        self.img2txt_db_path = img2txt_db
+        self.img2txt_db_dict: dict = init_json(img2txt_db)
     
     def init_reference(self, reference_summation, reference_embedding):
         self.reference_summation = reference_summation
@@ -51,8 +50,13 @@ class LogicadModel(nn.Module):
         Extract text from the image
         """
         prompt = TEXT_EXTRACTOR_PROMPTS[self.category]
-        text = img2text(image_path, self.api_key, query=prompt, model=self.model_vlm)
-        text = text["choices"][0]["message"]["content"]
+        if image_path in self.img2txt_db_dict:
+            text = self.img2txt_db_dict[image_path]
+        else:
+            text = img2text(image_path, self.api_key, query=prompt, model=self.model_vlm)
+            text = text["choices"][0]["message"]["content"]
+            self.img2txt_db_dict[image_path] = text
+            update_json(self.img2txt_db_path, self.img2txt_db_dict)
         return text
     
     def text_summation(self, image_path, template="",):
