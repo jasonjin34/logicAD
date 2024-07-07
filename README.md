@@ -62,6 +62,19 @@ or
 ```bash
 python tools/train.py --model logicad
 ```
+## Experiments Results
+
+|MVTec-Loco        | LogicAD |       |AnomlyMoE |         | 
+|------------------|---------|-------|----------|---------|
+|Metrics           | i-auroc | i-f1  | i-auroc  | i-f1    |
+| average          |         |       | 67.6     | 79.25   | 
+| breakfast_box    | 93.04   | 82.75 | N/A      | N/A     | 
+| juice_bottle     | N/A     | N/A   | N/A      | N/A     | 
+| pushpings        | N/A     | N/A   | N/A      | N/A     | 
+| screw_bag        | N/A     | N/A   | N/A      | N/A     | 
+| slicing connector| N/A     | N/A   | N/A      | N/A     | 
+
+* AnomalyMOE is the CVPR 2024 VAND challenge winner
 
 ## Acknowledges 
 This package is built based on anomalib, openclip, lighting and hydra
