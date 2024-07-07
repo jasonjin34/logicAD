@@ -28,6 +28,7 @@ dataset:
 model:
   name: logicad
   category: ${dataset.category}
+  img2txt_db: ./dataset/loco.json
   key_path: ./keys/gpt.json
   model_vlm: gpt-4o
   model_embedding: text-embedding-3-large

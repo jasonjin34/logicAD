@@ -31,6 +31,7 @@ class LogicadModel(nn.Module):
         api_key: str,
         category: str,
         model_vlm: str = "gpt-4o",
+        img2txt_db: str ="./dataset/loco.json",
         model_embedding: str = "text-embedding-3-large"
     ) -> None:
         super().__init__()

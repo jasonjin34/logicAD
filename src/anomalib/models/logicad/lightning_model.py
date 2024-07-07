@@ -25,6 +25,7 @@ class Logicad(AnomalyModule):
         category: str = "breakfast_box",
         key_path: str = "",
         model_vlm: str = "gpt-4o",
+        img2txt_db: str=  "./dataset/loco.json",
         model_embedding: str = "text-embedding-3-large",
         k_shot: int = 1,
     ) -> None:
@@ -32,6 +33,7 @@ class Logicad(AnomalyModule):
         self.model: LogicadModel = LogicadModel(
             category=category,
             api_key=key_path,
+            img2txt_db=img2txt_db,
             model_vlm=model_vlm,
             model_embedding=model_embedding,
         )
@@ -96,6 +98,7 @@ class LogicadLightning(Logicad):
             category=hparams.model.category,
             key_path=hparams.model.key_path,
             model_vlm=hparams.model.model_vlm,
+            img2txt_db=hparams.model.img2txt_db,
             model_embedding=hparams.model.model_embedding,
             k_shot=hparams.model.k_shot,
         )
