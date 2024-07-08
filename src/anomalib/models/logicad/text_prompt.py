@@ -12,7 +12,7 @@ TEXT_EXTRACTOR_PROMPTS = {
 }
 
 TEXT_SUMMATION_PROMPTS = {
-    "breakfast_box": "location: object ...",
+    "breakfast_box": "number of objects, and their location",
     "juice_bottle": None,
     "pushpins": None,
     "screw_bag": None,
