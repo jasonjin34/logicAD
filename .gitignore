@@ -129,6 +129,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+logicad/
 .env
 .venv
 env/
