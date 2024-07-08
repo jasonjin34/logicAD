@@ -1,15 +1,15 @@
 dataset:
   name: mvtec_loco 
   format: mvtec_loco 
-  path: ./datasets/MVTec_Loco
+  path: ./datasets/MVTec_Loco/mini
   task: segmentation
-  category: breakfast_box 
+  category: juice_bottle 
   train_batch_size: 1
   eval_batch_size: 1
   num_workers: 1
   image_size: 224 # 448  dimensions to which images are resized (mandatory)
   center_crop: 224 # 448 # dimensions to which images are center-cropped after resizing (optional)
-  normalization: imagenet # data distribution to which the images will be normalized: [none, imagenet]
+  normalization: none # data distribution to which the images will be normalized: [none, imagenet]
   transform_config:
     train: null
     eval: null
