@@ -51,22 +51,29 @@ img2text(path, api, query=query)
 ```{python}
 # test with screw bag, effects are ok 
 
-path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini/screw_bag/train/good/002.png"
-query = "Describe the items in the bag, size"
+path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini/screw_bag/train/good/009.png"
+query = "What are inside the bag"
 
-img2text(path, api, query=query)
+text = img2text(path, api, query=query)["choices"][0]["message"]["content"]
+print(text)
+txt2sum(text, few_shot_message="number of objects, ... bolt description", api_key=api)
 ```
 
 ```{python}
 # test with splicing connectors
 
-path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini/splicing_connectors/train/good/003.png"
-path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini/splicing_connectors/test/logical_anomalies/086.png"
-query = "What is one the left side of image, what is on the right side of image, and also middle? is the image symmetric?"
+path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini/splicing_connectors/train/good/001.png"
+path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini/splicing_connectors/test/logical_anomalies/061.png"
+query = "describe objects in shape, symmetric, broken and location, distance between two connectors equal the distance of cable"
 
-img2text(path, api, query=query)
+text = img2text(path, api, query=query)["choices"][0]["message"]["content"]
+print(text)
 ```
 
 ```{python}
+txt2sum(text, few_shot_message="connector: symmetric or not along, cable: {symmetric:, broken or not, longer than connectors?}", api_key=api)
+```
 
+```{python}
+text
 ```

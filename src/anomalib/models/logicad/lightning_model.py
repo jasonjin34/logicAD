@@ -79,6 +79,7 @@ class Logicad(AnomalyModule):
         del args, kwargs
 
         # Get anomaly maps and predicted scores from the model.
+        print(batch["image_path"])
         score = self.model(batch["image_path"])
         score = torch.tensor([score], device=batch['label'].device)
         batch["pred_scores"] = score
