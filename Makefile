@@ -16,5 +16,10 @@ sync:
 install_torch:
 	${PYTHON} -m pip install torchvision==0.12.0+cu113 torch==1.11.0+cu113 -i https://download.pytorch.org/whl/cu113
 
+# init submodules
+submodules:
+	git submodule update --init --recursive
+	pip install -r GroundingDINO/
+
 test:
 	${PYTEST} -s

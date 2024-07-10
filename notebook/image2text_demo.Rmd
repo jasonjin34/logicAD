@@ -43,7 +43,7 @@ txt2sum(text, few_shot_message="location of objects, color of objects", api_key=
 # Fail GPT can not really solve the counting issue, using WinCLIP inspired methods to generate seious of text
 
 path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini/pushpins/train/good/001.png"
-query = "can you describe the image per small section"
+query = "describe this image"
 
 img2text(path, api, query=query)
 ```
