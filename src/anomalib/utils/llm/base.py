@@ -66,6 +66,8 @@ def img2text(
     api_key,
     model="gpt-4o",
     query="How many pushpins are there?",
+    temperature=None,
+    top_p=None
 ):
     """
     image text extracton using LLM model, so far only support gpt-4o model
@@ -95,6 +97,12 @@ def img2text(
         ],
         "max_tokens": 300,
     }
+
+    if temperature is not None:
+        payload["temperature"] = temperature
+    if top_p is not None:
+        payload["top_p"] = top_p
+
     try:
         response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
         output = response.json()
