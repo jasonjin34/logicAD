@@ -63,10 +63,13 @@ class LogicadModel(nn.Module):
         boxes, _, phases = get_bbx_from_query(
             image=transformed_img, 
             model=self.gdino_model,
-            query=self.category
+            query=self.category,
+            box_threshold=0.2,
+            text_threshold=0.32
         )
-        patches = patch_extraction_from_box(img, boxes=boxes)
-        number_of_objects = len(patches)
+        patches = ""
+        # patches = patch_extraction_from_box(img, boxes=boxes)
+        number_of_objects = len(boxes)
         return {
             "number_of_objects": number_of_objects,
             "patches": patches,
@@ -98,6 +101,7 @@ class LogicadModel(nn.Module):
                  }
                 } 
                 """
+                print(sliding_windows_output_dict)
                 number_of_objects = sliding_windows_output_dict["number_of_objects"]
                 text["overall"] = f"overall: total number of pushpins is {number_of_objects}"
                 patch_text_list = []

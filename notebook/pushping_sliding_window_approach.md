@@ -64,5 +64,26 @@ img2text(patches[5], api_key=api_key, query="are different pushpins divided by p
 ```
 
 ```python
+## detection effective checking
+
+good_path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/original/pushpins/test/good"
+bad_path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/original/pushpins/test/logical_anomalies/"
+
+
+import os
+import glob
+
+total_pathes = glob.glob(os.path.join(bad_path, "*"))
+```
+
+```python
+for p in total_pathes[:2]:
+    print(p)
+    img, trans_img = dino_image_transform(path)
+    boxes, logits, _ = get_bbx_from_query(image=trans_img, model=model)
+    print(len(boxes), logits)
+```
+
+```python
 
 ```
