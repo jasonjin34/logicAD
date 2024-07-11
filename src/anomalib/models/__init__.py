@@ -100,7 +100,7 @@ def get_model(config: DictConfig | ListConfig) -> AnomalyModule:
     logger.info("Loading the model.")
 
     model: AnomalyModule
-    
+
     if config.model.name in get_available_models():
         module = import_module(f"anomalib.models.{config.model.name}")
         model = getattr(module, f"{convert_snake_to_pascal_case(config.model.name)}Lightning")(config)

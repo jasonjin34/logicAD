@@ -82,7 +82,7 @@ def hide_output(func):
     return wrapper
 
 
-#@hide_output
+# @hide_output
 def get_single_model_metrics(model_config: DictConfig | ListConfig, openvino_metrics: bool = False) -> dict:
     """Collects metrics for `model_name` and returns a dict of results.
 
@@ -159,7 +159,7 @@ def get_single_model_metrics(model_config: DictConfig | ListConfig, openvino_met
     return data
 
 
-def compute_on_cpu(sweep_config: DictConfig | ListConfig, folder: str | None = None, configs = None):
+def compute_on_cpu(sweep_config: DictConfig | ListConfig, folder: str | None = None, configs=None):
     """Compute all run configurations over a sigle CPU."""
     for run_config in get_run_config(sweep_config.grid_search):
         model_metrics = sweep(run_config, 0, sweep_config.seed, False, configs=configs)
@@ -167,13 +167,13 @@ def compute_on_cpu(sweep_config: DictConfig | ListConfig, folder: str | None = N
 
 
 def compute_on_gpu(
-        run_configs: list[DictConfig],
-        device: int,
-        seed: int,
-        writers: list[str],
-        folder: str | None = None,
-        compute_openvino: bool = False,
-        configs = None,
+    run_configs: list[DictConfig],
+    device: int,
+    seed: int,
+    writers: list[str],
+    folder: str | None = None,
+    compute_openvino: bool = False,
+    configs=None,
 ):
     """Go over each run config and collect the result.
 
@@ -198,29 +198,32 @@ def compute_on_gpu(
 def distribute_over_gpus(sweep_config: DictConfig | ListConfig, folder: str | None = None):
     """Distribute metric collection over all available GPUs. This is done by splitting the list of configurations."""
     if torch.cuda.device_count() == 1:
-        print("Only one GPU detected. Running benchmarking on single GPU, no need to launch multiple processes pool executor")
+        print(
+            "Only one GPU detected. Running benchmarking on single GPU, no need to launch multiple processes pool executor"
+        )
         run_configs = list(get_run_config(sweep_config.grid_search))
         compute_on_gpu(
-            run_configs, 
-            1, 
-            sweep_config.seed, 
-            sweep_config.writer, 
-            folder, 
+            run_configs,
+            1,
+            sweep_config.seed,
+            sweep_config.writer,
+            folder,
             sweep_config.compute_openvino,
-            configs=sweep_config)
+            configs=sweep_config,
+        )
     else:
         with ProcessPoolExecutor(
-                max_workers=torch.cuda.device_count(), mp_context=multiprocessing.get_context("spawn")
+            max_workers=torch.cuda.device_count(), mp_context=multiprocessing.get_context("spawn")
         ) as executor:
             run_configs = list(get_run_config(sweep_config.grid_search))
             jobs = []
             for device_id, run_split in enumerate(
-                    range(0, len(run_configs), math.ceil(len(run_configs) / torch.cuda.device_count()))
+                range(0, len(run_configs), math.ceil(len(run_configs) / torch.cuda.device_count()))
             ):
                 jobs.append(
                     executor.submit(
                         compute_on_gpu,
-                        run_configs[run_split: run_split + math.ceil(len(run_configs) / torch.cuda.device_count())],
+                        run_configs[run_split : run_split + math.ceil(len(run_configs) / torch.cuda.device_count())],
                         device_id + 1,
                         sweep_config.seed,
                         sweep_config.writer,
@@ -270,11 +273,11 @@ def distribute(config: DictConfig | ListConfig):
 
 
 def sweep(
-        run_config: DictConfig | ListConfig, 
-        device: int = 0, 
-        seed: int = 42, 
-        convert_openvino: bool = False,
-        configs = None,
+    run_config: DictConfig | ListConfig,
+    device: int = 0,
+    seed: int = 42,
+    convert_openvino: bool = False,
+    configs=None,
 ) -> dict[str, str | float]:
     """Go over all the values mentioned in `grid_search` parameter of the benchmarking config.
 
@@ -297,14 +300,13 @@ def sweep(
         config_filename = "config_mini_mvtec"
     else:
         raise ValueError(f"dataset name {run_config['dataset.name']} is not supported")
-    
-    model_config = get_configurable_parameters(
-        model_name=run_config.model_name, config_filename=config_filename)
+
+    model_config = get_configurable_parameters(model_name=run_config.model_name, config_filename=config_filename)
     model_config.project.seed = seed
 
     if run_config.model_name in ["winclip", "sclipad", "gemad"]:
         # update the run_config by model category for text-prompt / clip based model
-        run_config['model.category'] = run_config['dataset.category']
+        run_config["model.category"] = run_config["dataset.category"]
         if run_config.model_name == "sclipad":
             # update the run config image size
             model_config.model.k_shot = configs.few_shot_k
@@ -393,20 +395,51 @@ if __name__ == "__main__":
     parser.add_argument("--config", type=Path, default=default_benchmark_path, help="Path to sweep configuration")
     parser.add_argument("--crop_size", type=int, default=224, help="center crop size to use for benchmarking")
     parser.add_argument("--img_size", type=int, default=224, help="image size to use for benchmarking")
-    parser.add_argument("--zero_shot", type=lambda x:bool(distutils.util.strtobool(x)), default=True, help="zero-shot or few-shot settings")
+    parser.add_argument(
+        "--zero_shot",
+        type=lambda x: bool(distutils.util.strtobool(x)),
+        default=True,
+        help="zero-shot or few-shot settings",
+    )
     parser.add_argument("--few_shot_k", type=int, default=4, help="few-shot k value")
-    parser.add_argument("--csa", type=lambda x:bool(distutils.util.strtobool(x)), default=True, help="using csa for the last layer of visual transblocks")
-    parser.add_argument("--gem", type=lambda x:bool(distutils.util.strtobool(x)), default=False, help="using csa for the last layer of visual transblocks")
-    parser.add_argument("--cls_csa", type=lambda x:bool(distutils.util.strtobool(x)), default=True, help="using csa for the cls token for classification")
-    parser.add_argument("--key_smoothing", type=lambda x:bool(distutils.util.strtobool(x)), default=False, help="center crop size to use for benchmarking")
+    parser.add_argument(
+        "--csa",
+        type=lambda x: bool(distutils.util.strtobool(x)),
+        default=True,
+        help="using csa for the last layer of visual transblocks",
+    )
+    parser.add_argument(
+        "--gem",
+        type=lambda x: bool(distutils.util.strtobool(x)),
+        default=False,
+        help="using csa for the last layer of visual transblocks",
+    )
+    parser.add_argument(
+        "--cls_csa",
+        type=lambda x: bool(distutils.util.strtobool(x)),
+        default=True,
+        help="using csa for the cls token for classification",
+    )
+    parser.add_argument(
+        "--key_smoothing",
+        type=lambda x: bool(distutils.util.strtobool(x)),
+        default=False,
+        help="center crop size to use for benchmarking",
+    )
     parser.add_argument("--cls_type", type=str, default="max", help="cls type to get classification score")
     parser.add_argument("--task_name", type=str, default="test", help="experiment name for benchmarking")
     parser.add_argument("--ckpt", type=str, default=None, help="ckpt to be loaded from alignment training")
     parser.add_argument("--backbone", type=str, default="ViT-B-16", help="")
     parser.add_argument("--pretrained", type=str, default="laion400m_e32", help="")
-    parser.add_argument("--text_adapter", type=float, default=0.0, help="text adapter quotient, if ckpt trained with one")
-    parser.add_argument("--image_adapter", type=float, default=0.0, help="image adapter quotient, if ckpt trained with one")
-    parser.add_argument("--attn_logit_scale", type=float, default=-1, help="csa logit scale for the last layer of visual transblocks")
+    parser.add_argument(
+        "--text_adapter", type=float, default=0.0, help="text adapter quotient, if ckpt trained with one"
+    )
+    parser.add_argument(
+        "--image_adapter", type=float, default=0.0, help="image adapter quotient, if ckpt trained with one"
+    )
+    parser.add_argument(
+        "--attn_logit_scale", type=float, default=-1, help="csa logit scale for the last layer of visual transblocks"
+    )
 
     _args = parser.parse_args()
 
@@ -427,23 +460,25 @@ if __name__ == "__main__":
     _sweep_config.text_adapter = _args.text_adapter
     _sweep_config.image_adapter = _args.image_adapter
     _sweep_config.attn_logit_scale = _args.attn_logit_scale
-    
+
     # backbone = ["ViT-B-16", "ViT-B-16", "ViT-L-14", "ViT-B-16-quickgelu", "ViT-B-16-plus-240", "EVA02-B-16", "EVA02-L-14"]
     # pretrained = ["laion400m_e32", "laion2b_s34b_b88k", "datacomp_xl_s13b_b90k", "metaclip_fullcc", "laion400m_e32", "merged2b_s8b_b131k", "merged2b_s4b_b131k"]
 
     csa = "sclip" if _args.csa else "clip"
     cls_csa = "cls_csa" if _args.cls_csa else "cls_att"
-    
+
     if _args.zero_shot:
         few_shot_or_zero_shot = "zeroshot"
     else:
         few_shot_or_zero_shot = f"few_shot_{str(k)}"
     print(f"Commencing {few_shot_or_zero_shot} benchmark")
 
-    _sweep_config.task_name = f"{_sweep_config.grid_search.dataset.name}-{few_shot_or_zero_shot}" + \
-        f"-{_args.backbone}_{_args.pretrained}" + \
-        (f"-ckpt_{''.join(_args.ckpt.split('/')[-1].split('.')[:-1])}" if _args.ckpt else "") + \
-        f"-image_{_args.img_size}-crop_{_args.crop_size}-{csa}-{cls_csa}_{_args.cls_type}"
+    _sweep_config.task_name = (
+        f"{_sweep_config.grid_search.dataset.name}-{few_shot_or_zero_shot}"
+        + f"-{_args.backbone}_{_args.pretrained}"
+        + (f"-ckpt_{''.join(_args.ckpt.split('/')[-1].split('.')[:-1])}" if _args.ckpt else "")
+        + f"-image_{_args.img_size}-crop_{_args.crop_size}-{csa}-{cls_csa}_{_args.cls_type}"
+    )
     distribute(_sweep_config)
     print("Finished gathering results ⚡")
     print("Generate average metrics statistic")

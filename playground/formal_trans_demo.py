@@ -2,7 +2,9 @@ from openai import OpenAI
 
 client = OpenAI(api_key="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")
 
-prompt0 = "Given the description of an image, please output a formal specification as a set of (propositional) formulae. "
+prompt0 = (
+    "Given the description of an image, please output a formal specification as a set of (propositional) formulae. "
+)
 syn_rules = """Some syntactical rules are to be followed:\n
 1. Each line consists of only one piece of fact.\n
 2. Predicates are named in terms of properties such as location, color, size etc. Connect words with underline. Use lowercases only.\n
@@ -22,14 +24,14 @@ img_desc = "The left side of the image contains three fresh fruits: two tangerin
 # img_desc = "On the left side of the image, there are two tangerines and a peach (or nectarine). On the right side of the image, there is a mixture of dried banana chips and almonds."
 # img_desc = "The image shows a food tray with two compartments. \n\n- On the left side of the image, there are three pieces of fruit: one peach and two mandarins.\n- On the right side of the image, there is a mixture of granola, slices of dried banana, and some almonds."
 response = client.chat.completions.create(
-    model="gpt-4o",  
+    model="gpt-4o",
     messages=[
         {
-            "role":"user",
-            "content": prompt0 + syn_rules +two_shot + img_desc,
+            "role": "user",
+            "content": prompt0 + syn_rules + two_shot + img_desc,
         }
     ],
-    max_tokens=150  
+    max_tokens=150,
 )
 
 
