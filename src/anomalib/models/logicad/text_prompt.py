@@ -25,3 +25,14 @@ TEXT_NUM_OBJECTS_PROMPTS = {
         "prompt": "the total number of pushpins is not correct"
     }
 }
+
+PROMPT0 = (
+    "Given the description of an image, please output a formal specification as a set of (propositional) formulae. "
+)
+
+RULE = """Some syntactical rules are to be followed:\n
+1. Each line consists of only one piece of fact.\n
+2. Predicates are named in terms of properties such as location, color, size etc. Connect words with underline. Use lowercases only.\n
+3. Objects and quantities are given as arguments of the predicates (use * if the object is uncountable or the number is irrelevant). Connect words with underline and always use singular form\n
+4. Logical connectives such as $AND$, $OR$ $NOT$ might be used.
+5. Description and output should be given in form 'Text: (Description of the image)\nFormulae: (a set of logical formulae)'"""

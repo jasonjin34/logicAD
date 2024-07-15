@@ -23,10 +23,12 @@ developed by [Jin Er*](er.jin@lfb.rwth-aachen.de), Qihui Feng, Yongli Mou
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
+    <li><a href="#main-figure">Run Training</a></li>
     <li><a href="#run-training">Run Training</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
+
 
 <!-- GETTING STARTED -->
 ## Getting Started
@@ -52,6 +54,15 @@ _Below is an example of how you can install all the relevant packages_
     pip install requirements.txt
    ```
 # Source Packages
+
+# Main Figure
+
+<br />
+<div align="center">
+    <img src="assets/main_figure_logic_ad.drawio (1).png" alt="Logo" width="600" height="250">
+  <h3 align="center">Logical Anomaly Detection</h3>
+</div>
+
 
 ## Running / Training
 The config file is saved in `src/anomalib/models/logicad/config.yaml`
