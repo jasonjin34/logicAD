@@ -151,3 +151,46 @@ def txt2sum(
     except Exception as e:
         output = None
     return output
+
+
+def txt2formal(
+    api_key,
+    model="gpt-4o",
+    max_token=100,
+    **prompt,
+):
+    """
+    use openai to get the formalization of the text
+    """
+    api_key = key_extraction(api_key)
+    client = OpenAI(api_key=api_key)
+
+    prompt0 = prompt['prompt']
+    syn_rules = prompt['syn_rules']
+
+    if prompt.get('k_shot', True):
+        k_shot = prompt['k_shot']
+    else:
+        k_shot = ""
+    
+    if prompt.get('query', True):
+        query = prompt['query']
+    else:
+        query = ""
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt0 + syn_rules + k_shot + query,
+            }
+        ],
+        max_tokens=max_token,
+    )
+
+    try:
+        output = response.choices[0].message.content
+    except Exception as e:
+        output = None
+    return output
