@@ -21,8 +21,7 @@ try:
             image_path = root_dir / image_path
             image = cv2.imread(str(image_path))
             image_size = image.shape[:-1]
-            if category not in category_stats \
-                or image_size not in category_stats[category]:
+            if category not in category_stats or image_size not in category_stats[category]:
                 category_stats.setdefault(category, {})
                 category_stats[category][image_size] = 1
             else:
@@ -30,10 +29,7 @@ try:
 except:
     pass
 
-with open(str(root_dir.name)+".json", "w") as f:
-    category_stats = {
-        ck: {str(k):v for k, v in cv.items()}
-        for ck, cv in category_stats.items()
-    }
+with open(str(root_dir.name) + ".json", "w") as f:
+    category_stats = {ck: {str(k): v for k, v in cv.items()} for ck, cv in category_stats.items()}
     json_str = json.dumps(category_stats, indent=4, sort_keys=True)
     f.write(json_str)

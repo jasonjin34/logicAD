@@ -18,18 +18,14 @@ from comet_ml import Experiment
 from torch.utils.tensorboard.writer import SummaryWriter
 
 
-def write_summary(
-    folder: str = "./runs"
-):
-    """ Writes summary of each metrics
+def write_summary(folder: str = "./runs"):
+    """Writes summary of each metrics
     i.e. get the average value for AUROC and F1 score for image and pixel
     Args:
         folder (optional, str): Sub-directory to which runs are written to. Defaults to ./run
     """
-    def generate_stat_path(
-        result_path: str,
-        stat_name: str = "stat_"
-    ):
+
+    def generate_stat_path(result_path: str, stat_name: str = "stat_"):
         result_path_elements = result_path.split(os.sep)
         result_path_elements[-1] = stat_name + result_path_elements[-1]
         return os.path.join(*result_path_elements)

@@ -9,11 +9,7 @@ from omegaconf import OmegaConf
 
 # help functions
 def dict_from_class(cls):
-    return dict(
-        (key, value)
-        for (key, value) in cls.__dict__.items()
-        if not key.startswith("__")
-    )
+    return dict((key, value) for (key, value) in cls.__dict__.items() if not key.startswith("__"))
 
 
 def load_path(path):
@@ -21,25 +17,25 @@ def load_path(path):
     return path_dict
 
 
-def load_gdino_model(
-    ckpt_path, 
-    cfg="swint", 
-    device="cpu", 
-    type="groundingdino"
-):
+def load_gdino_model(ckpt_path=None, cfg="swint", device="cpu", type="groundingdino"):
     if type == "groundingdino":
         # convert the config module to dict
         if cfg is None:
             raise ValueError("cfg is required for groundingdino model, please select either swintb or swint")
         else:
             if cfg == "swint":
-                cfg = gdino_swint_cfg
+                cfg_cls = gdino_swint_cfg
             elif cfg == "swinb":
-                cfg = gdino_swinb_cfg
+                cfg_cls = gdino_swinb_cfg
             else:
                 raise ValueError("cfg should be either swint or swinb")
-        cfg = SLConfig(dict_from_class(cfg))
-        model = build_model(cfg)
+        cfg_dict = SLConfig(dict_from_class(cfg_cls))
+        model = build_model(cfg_dict)
+        if ckpt_path is None:
+            if cfg == "swint":
+                ckpt_path = "./datasets/GroundingDino/groundingdino_swint_ogc.pth"
+            elif cfg == "swinb":
+                ckpt_path = "./datasets/GroundingDino/groundingdino_swinb.pth"
         checkpoint = torch.load(ckpt_path, map_location=device)
         model.load_state_dict(clean_state_dict(checkpoint["model"]), strict=False)
         _ = model.eval()

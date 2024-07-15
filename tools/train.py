@@ -7,9 +7,22 @@ results.
 
 # Copyright (C) 2022 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
-MVETEC = ["bottle", "cable", "capsule", "carpet", "grid", "hazelnut",
-    "leather", "metal_nut", "pill", "screw", "tile", "toothbrush", "transistor",
-    "wood","zipper",
+MVETEC = [
+    "bottle",
+    "cable",
+    "capsule",
+    "carpet",
+    "grid",
+    "hazelnut",
+    "leather",
+    "metal_nut",
+    "pill",
+    "screw",
+    "tile",
+    "toothbrush",
+    "transistor",
+    "wood",
+    "zipper",
 ]
 
 VISA = ["candle", "capsules", "cashew", "chewinggum", "fryum", "macaroni1", "macaroni2", "pcb1", "pcb2", "pcb3", "pcb4"]
@@ -90,8 +103,8 @@ def train(args: Namespace):
                 config.model.category = c
             except Exception as e:
                 continue
-            _run_experiment(config) 
-    
+            _run_experiment(config)
+
     else:
         _run_experiment(config)
 
