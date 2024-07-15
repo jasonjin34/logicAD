@@ -1,7 +1,6 @@
 from PIL import Image
 import numpy as np
 import torch
-import matplotlib
 from matplotlib import pyplot as plt
 from einops import rearrange
 

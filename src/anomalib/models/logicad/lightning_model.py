@@ -26,6 +26,8 @@ class Logicad(AnomalyModule):
         key_path: str = "",
         model_vlm: str = "gpt-4o",
         img2txt_db: str=  "./dataset/loco.json",
+        sliding_window: bool = False,
+        gdino_cfg: str= "swint",
         model_embedding: str = "text-embedding-3-large",
         k_shot: int = 1,
     ) -> None:
@@ -35,12 +37,16 @@ class Logicad(AnomalyModule):
             api_key=key_path,
             img2txt_db=img2txt_db,
             model_vlm=model_vlm,
+            sliding_window=sliding_window,
             model_embedding=model_embedding,
         )
+        self.gdino_cfg = gdino_cfg
+        self.sliding_window = sliding_window
         self.k_shot = k_shot
         self.reference_images: list[str] = []
         self.reference_summation: list[str] = []
         self.reference_embedding: list[Tensor] = []
+        self.reference_img_features = []
 
     def configure_optimizers(self) -> None:
         return None
@@ -62,7 +68,9 @@ class Logicad(AnomalyModule):
             self.reference_summation.append(text_summation)
             embedding = self.model.text_embedding(input_text=text_summation)
             self.reference_embedding.append(embedding)
-        self.model.init_reference(self.reference_summation, self.reference_embedding)
+            if self.sliding_window:
+                self.reference_img_features.append(self.model.generate_centroid_points(path))
+        self.model.init_reference(self.reference_summation, self.reference_embedding, self.reference_img_features)
         print("Reference images: ", self.reference_summation)
         
     def validation_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> STEP_OUTPUT:
@@ -102,6 +110,8 @@ class LogicadLightning(Logicad):
             img2txt_db=hparams.model.img2txt_db,
             model_embedding=hparams.model.model_embedding,
             k_shot=hparams.model.k_shot,
+            sliding_window=hparams.model.sliding_window,
+            gdino_cfg=hparams.model.gdino_cfg,
         )
         self.hparams: DictConfig | ListConfig  # type: ignore
         self.save_hyperparameters(hparams)

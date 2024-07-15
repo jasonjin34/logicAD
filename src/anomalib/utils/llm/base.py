@@ -13,6 +13,7 @@ from typing import Union
 from PIL import Image
 import io
 
+
 def image2base64(image: Union[np.ndarray, Image.Image], image_format: str = "JPEG", quality: int = 100) -> str:
     if isinstance(image, np.ndarray):
         im = Image.fromarray(image)
@@ -24,6 +25,7 @@ def image2base64(image: Union[np.ndarray, Image.Image], image_format: str = "JPE
     buffered = io.BytesIO()
     im.save(buffered, format=image_format, quality=quality)
     return base64.b64encode(buffered.getvalue()).decode("utf-8")
+
 
 def cos_sim(a, b):
     if isinstance(a, list):
@@ -48,12 +50,12 @@ def encode_image(image, image_format="png"):
     """
     convert the code to base64
     """
-    if isinstance(image, str): # if the image is a path
+    if isinstance(image, str):  # if the image is a path
         image_path = image
         with open(image_path, "rb") as image_file:
             img = image_file.read()
             img = base64.b64encode(img).decode("utf-8")
-    else: # if the image is a numpy array or tensor
+    else:  # if the image is a numpy array or tensor
         if isinstance(image, torch.Tensor):
             # convert B, C, H, W to  H, W, C as numpy format
             image = image.squeeze(0).permute(1, 2, 0).numpy()
@@ -61,14 +63,7 @@ def encode_image(image, image_format="png"):
     return img
 
 
-def img2text(
-    image,
-    api_key,
-    model="gpt-4o",
-    query="How many pushpins are there?",
-    temperature=None,
-    top_p=None
-):
+def img2text(image, api_key, model="gpt-4o", query="How many pushpins are there?", temperature=None, top_p=None):
     """
     image text extracton using LLM model, so far only support gpt-4o model
     # TODO
@@ -157,3 +152,45 @@ def txt2sum(
         output = None
     return output
 
+
+def txt2formal(
+    api_key,
+    model="gpt-4o",
+    max_token=100,
+    **prompt,
+):
+    """
+    use openai to get the formalization of the text
+    """
+    api_key = key_extraction(api_key)
+    client = OpenAI(api_key=api_key)
+
+    prompt0 = prompt['prompt']
+    syn_rules = prompt['syn_rules']
+
+    if prompt.get('k_shot', True):
+        k_shot = prompt['k_shot']
+    else:
+        k_shot = ""
+    
+    if prompt.get('query', True):
+        query = prompt['query']
+    else:
+        query = ""
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt0 + syn_rules + k_shot + query,
+            }
+        ],
+        max_tokens=max_token,
+    )
+
+    try:
+        output = response.choices[0].message.content
+    except Exception as e:
+        output = None
+    return output
