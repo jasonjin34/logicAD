@@ -59,11 +59,19 @@ INDEX = {
     ],
     "pushpins": [
         0,  # two pushping in one compartment
+        1,
+        2,
+        3,
+        4,
         23,
-        30,  # missing pushpin
-        31,
-        61,  # no pushpin
-        63,  # broken compartment
+        #30,  # missing pushpin
+        #31,
+        #61,  # no pushpin
+        #63,  # broken compartment
+        87,
+        88,
+        89,
+        90,
     ],
 }
 
