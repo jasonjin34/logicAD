@@ -9,7 +9,6 @@ from .utils import init_json, update_json
 from .text_prompt import (
     TEXT_EXTRACTOR_PROMPTS,
     TEXT_SUMMATION_PROMPTS,
-    TEXT_NUM_OBJECTS_PROMPTS,
 )
 
 from anomalib.utils.llm import (
@@ -34,6 +33,8 @@ class LogicadModel(nn.Module):
         api_key: str,
         category: str,
         model_vlm: str = "gpt-4o",
+        top_p = None,
+        temp = None,
         img2txt_db: str ="./dataset/loco.json",
         model_embedding: str = "text-embedding-3-large",
         sliding_window: bool = False,
@@ -43,6 +44,8 @@ class LogicadModel(nn.Module):
         self.api_key = api_key
         self.category = category
         self.sliding_window = sliding_window
+        self.top_p = top_p
+        self.temp = temp
         self.model_vlm = model_vlm
         self.model_embedding = model_embedding
         self.reference_embedding = None
@@ -72,7 +75,14 @@ class LogicadModel(nn.Module):
         Extract text from the image
         """
         def text_retrival(image_path):
-            text = img2text(image_path, self.api_key, query=prompt, model=self.model_vlm)
+            text = img2text(
+                image_path, 
+                self.api_key, 
+                query=prompt, 
+                model=self.model_vlm,
+                temperature=self.temp,
+                top_p=self.top_p
+            )
             text = text["choices"][0]["message"]["content"]
             return text 
         prompt = TEXT_EXTRACTOR_PROMPTS[self.category]
@@ -91,6 +101,8 @@ class LogicadModel(nn.Module):
         text = self.text_extraction(image_path)
         if template == "":
             template = TEXT_SUMMATION_PROMPTS[self.category]
+        
+        import pdb; pdb.set_trace()
         summary = txt2sum(
             input_text=text,
             few_shot_message=template,

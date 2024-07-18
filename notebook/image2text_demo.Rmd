@@ -27,6 +27,11 @@ api = "/home/erjin/git/Logic_AD_LLM/keys/gpt.json"
 ```
 
 ```{python}
+path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec/cable/test/combined/007.png"
+img2text(path, api, query="is the image normal?")["choices"][0]["message"]["content"]
+```
+
+```{python}
 text = img2text(path, api, query=query)["choices"][0]["message"]["content"]
 ```
 

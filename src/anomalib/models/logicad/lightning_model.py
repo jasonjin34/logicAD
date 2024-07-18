@@ -25,6 +25,8 @@ class Logicad(AnomalyModule):
         category: str = "breakfast_box",
         key_path: str = "",
         model_vlm: str = "gpt-4o",
+        temp = None,
+        top_p = None,
         img2txt_db: str=  "./dataset/loco.json",
         sliding_window: bool = False,
         gdino_cfg: str= "swint",
@@ -35,6 +37,8 @@ class Logicad(AnomalyModule):
         self.model: LogicadModel = LogicadModel(
             category=category,
             api_key=key_path,
+            temp=temp,
+            top_p=top_p,
             img2txt_db=img2txt_db,
             model_vlm=model_vlm,
             sliding_window=sliding_window,
