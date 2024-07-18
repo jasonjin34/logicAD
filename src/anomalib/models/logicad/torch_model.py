@@ -35,6 +35,8 @@ class LogicadModel(nn.Module):
         model_vlm: str = "gpt-4o",
         top_p = None,
         temp = None,
+        max_token = 300,
+        img_size=128,
         img2txt_db: str ="./dataset/loco.json",
         model_embedding: str = "text-embedding-3-large",
         sliding_window: bool = False,
@@ -44,6 +46,8 @@ class LogicadModel(nn.Module):
         self.api_key = api_key
         self.category = category
         self.sliding_window = sliding_window
+        self.img_size = img_size
+        self.max_token = max_token
         self.top_p = top_p
         self.temp = temp
         self.model_vlm = model_vlm
@@ -80,6 +84,8 @@ class LogicadModel(nn.Module):
                 self.api_key, 
                 query=prompt, 
                 model=self.model_vlm,
+                max_tokens=self.max_token,
+                img_size=self.img_size,
                 temperature=self.temp,
                 top_p=self.top_p
             )
@@ -102,7 +108,6 @@ class LogicadModel(nn.Module):
         if template == "":
             template = TEXT_SUMMATION_PROMPTS[self.category]
         
-        import pdb; pdb.set_trace()
         summary = txt2sum(
             input_text=text,
             few_shot_message=template,

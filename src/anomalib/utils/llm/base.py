@@ -46,16 +46,26 @@ def key_extraction(file_path):
     return key
 
 
+def resize_image(image, img_size=256):
+    img = Image.open(image)
+    if not isinstance(img_size, int):
+        img_size = img_size[0]
+    wpercent = (img_size/float(img.size[0]))
+    hsize = int((float(img.size[1])*float(wpercent)))
+    img = img.resize((img_size,hsize), Image.Resampling.LANCZOS)
+    return img
+
+
 # Function to encode the image
-def encode_image(image, image_format="png"):
+def encode_image(image, image_format="png", img_size=128):
     """
     convert the code to base64
     """
     if isinstance(image, str):  # if the image is a path
         image_path = image
-        with open(image_path, "rb") as image_file:
-            img = image_file.read()
-            img = base64.b64encode(img).decode("utf-8")
+        img = resize_image(image_path, img_size=img_size)
+        img = image2base64(img, image_format=image_format)
+        # img = base64.b64encode(img).decode("utf-8")
     else:  # if the image is a numpy array or tensor
         if isinstance(image, torch.Tensor):
             # convert B, C, H, W to  H, W, C as numpy format
@@ -64,7 +74,16 @@ def encode_image(image, image_format="png"):
     return img
 
 
-def img2text(image, api_key, model="gpt-4o", query="How many pushpins are there?", temperature=None, top_p=None):
+def img2text(
+    image, 
+    api_key, 
+    model="gpt-4o", 
+    query="How many pushpins are there?", 
+    temperature=None, 
+    top_p=None,
+    img_size=128,
+    max_tokens=300,
+):
     """
     image text extracton using LLM model, so far only support gpt-4o model
     # TODO
@@ -75,7 +94,7 @@ def img2text(image, api_key, model="gpt-4o", query="How many pushpins are there?
 
     api_key = key_extraction(api_key)
     # Getting the base64 string
-    base64_image = encode_image(image)
+    base64_image = encode_image(image, img_size=img_size)
 
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
 
@@ -90,7 +109,7 @@ def img2text(image, api_key, model="gpt-4o", query="How many pushpins are there?
                 ],
             }
         ],
-        "max_tokens": 300,
+        "max_tokens": max_tokens,
     }
 
     if temperature is not None:
@@ -141,7 +160,6 @@ def txt2sum(
     api_key = key_extraction(api_key)
     client = OpenAI(api_key=api_key)
 
-    import pdb; pdb.set_trace()
     response = client.chat.completions.create(
         model=model,
         response_format={"type": "json_object"},
@@ -154,19 +172,19 @@ def txt2sum(
         ],
     )
 
-    response = client.chat.completions.create(
-        model=model,
-        response_format={"type": "json_object"},
-        messages=[
-            {
-                "role": "system",
-                "content": system_message,
-            },
-            {"role": "user", "content": f"Can you summarize as following format, {few_shot_message}? {input_text}"},
-        ],
-        temperature=temp,
-        top_p=top_p,
-    )
+    # response = client.chat.completions.create(
+    #     model=model,
+    #     response_format={"type": "json_object"},
+    #     messages=[
+    #         {
+    #             "role": "system",
+    #             "content": system_message,
+    #         },
+    #         {"role": "user", "content": f"Can you summarize as following format, {few_shot_message}? {input_text}"},
+    #     ],
+    #     temperature=temp,
+    #     top_p=top_p,
+    # )
     try:
         output = response.choices[0].message.content
     except Exception as e:
