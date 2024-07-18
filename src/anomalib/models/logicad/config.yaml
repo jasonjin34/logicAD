@@ -32,6 +32,8 @@ model:
   key_path: ./keys/gpt.json
   model_vlm: gpt-4o
   model_embedding: text-embedding-3-large
+  temp: None
+  top_p: None
   sliding_window: false # options: [true, false], divide conqour
   gdino_cfg: swint
   k_shot: 1

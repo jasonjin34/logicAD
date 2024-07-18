@@ -12,6 +12,7 @@ from numpy.linalg import norm
 from typing import Union
 from PIL import Image
 import io
+from openai._types import NotGiven
 
 
 def image2base64(image: Union[np.ndarray, Image.Image], image_format: str = "JPEG", quality: int = 100) -> str:
@@ -68,7 +69,6 @@ def img2text(image, api_key, model="gpt-4o", query="How many pushpins are there?
     image text extracton using LLM model, so far only support gpt-4o model
     # TODO
     # add other LLM model, particular for some small model for the ablation study
-
     args:
         image: str, path to the image, numpy array or tensor
     """
@@ -128,12 +128,31 @@ def txt2sum(
     model="gpt-4o",
     system_message="You are a helpful assistant designed to output JSON.",
     max_token=100,
+    top_p = None,
+    temp = None,
 ):
     """
     use openai to get the summarization of the text
     """
+    if top_p is None:
+        top_p = NotGiven
+    if temp is None:
+        temp = NotGiven
     api_key = key_extraction(api_key)
     client = OpenAI(api_key=api_key)
+
+    import pdb; pdb.set_trace()
+    response = client.chat.completions.create(
+        model=model,
+        response_format={"type": "json_object"},
+        messages=[
+            {
+                "role": "system",
+                "content": system_message,
+            },
+            {"role": "user", "content": f"Can you summarize as following format, {few_shot_message}? {input_text}"},
+        ],
+    )
 
     response = client.chat.completions.create(
         model=model,
@@ -145,6 +164,8 @@ def txt2sum(
             },
             {"role": "user", "content": f"Can you summarize as following format, {few_shot_message}? {input_text}"},
         ],
+        temperature=temp,
+        top_p=top_p,
     )
     try:
         output = response.choices[0].message.content

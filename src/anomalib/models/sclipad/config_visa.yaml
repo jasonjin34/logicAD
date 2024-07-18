@@ -73,10 +73,11 @@ model:
   few_shot_topk: 3
   apply_key_smoothing: true
   isCSA: true
+  clsCSA: false
   apply_sliding_windows: true 
   text_adapter: 0.2
   image_adapter: 0.2
-  logit_scale: 0
+  attn_logit_scale: 1.5
 
 metrics:
   image:
@@ -110,7 +111,7 @@ optimization:
 
 # PL Trainer Args. Don't add extra parameter here.
 trainer:
-  enable_checkpointing: false
+  enable_checkpointing: true
   default_root_dir: null
   gradient_clip_val: 0
   gradient_clip_algorithm: norm

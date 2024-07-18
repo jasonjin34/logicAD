@@ -27,6 +27,14 @@ MVETEC = [
 
 VISA = ["candle", "capsules", "cashew", "chewinggum", "fryum", "macaroni1", "macaroni2", "pcb1", "pcb2", "pcb3", "pcb4"]
 
+LOCO = [
+    "breakfast_box",
+    "juice_bottle",
+    "pushpins",
+    "screw_bag",
+    "splicing_connectors",
+]
+
 import logging
 import warnings
 from argparse import ArgumentParser, Namespace
@@ -51,9 +59,12 @@ def get_parser() -> ArgumentParser:
         ArgumentParser: The parser object.
     """
     parser = ArgumentParser()
-    parser.add_argument("--model", type=str, default="padim", help="Name of the algorithm to train/test")
+    parser.add_argument("--model", type=str, default="logicad", help="Name of the algorithm to train/test")
     parser.add_argument("--config", type=str, required=False, help="Path to a model config file")
     parser.add_argument("--log-level", type=str, default="INFO", help="<DEBUG, INFO, WARNING, ERROR>")
+    parser.add_argument("--temp", default=None, help="gpt temperature parameter")
+    parser.add_argument("--top_p", default=None, help="gpt top_p parameter")
+    parser.add_argument("--category", default=None, help="experiments data category")
     return parser
 
 
@@ -70,6 +81,15 @@ def train(args: Namespace):
         warnings.filterwarnings("ignore")
 
     config = get_configurable_parameters(model_name=args.model, config_path=args.config)
+
+    # Override the model parameters if provided in the command line
+    if args.temp is not None:
+        config.model.temp = args.temp
+    if args.top_p is not None:
+        config.model.top_p = args.top_p
+    if args.category is not None:
+        config.dataset.category = args.category
+        config.model.category = args.category
 
     def _run_experiment(config):
         """Run experiment."""
