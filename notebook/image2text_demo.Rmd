@@ -14,6 +14,9 @@ jupyter:
 ---
 
 ```{python}
+# %load_ext autoreload
+# %autoreload 2
+
 from anomalib.utils.llm import img2text, txt2sum
 ```
 
@@ -28,7 +31,7 @@ api = "/home/erjin/git/Logic_AD_LLM/keys/gpt.json"
 
 ```{python}
 path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec/cable/test/combined/007.png"
-img2text(path, api, query="is the image normal?")["choices"][0]["message"]["content"]
+img2text(path, api, query="describe this cable image")["choices"][0]["message"]["content"]
 ```
 
 ```{python}
