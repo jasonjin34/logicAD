@@ -19,7 +19,8 @@ install_torch:
 # init submodules
 submodules:
 	git submodule update --init --recursive
-	pip install -r GroundingDINO/
+	pip install -e GroundingDINO/
+	pip install -e LLaVA/
 
 test:
 	${PYTEST} -s
