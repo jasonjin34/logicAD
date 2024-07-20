@@ -14,6 +14,10 @@ from PIL import Image
 import io
 from openai._types import NotGiven
 
+from openai import AzureOpenAI
+
+from .vlm import llava_inference
+
 
 def image2base64(image: Union[np.ndarray, Image.Image], image_format: str = "JPEG", quality: int = 100) -> str:
     if isinstance(image, np.ndarray):
@@ -37,12 +41,12 @@ def cos_sim(a, b):
     return cos_sim
 
 
-def key_extraction(file_path):
+def key_extraction(file_path, key_name="gpt"):
     if os.path.exists(file_path) is False:
         raise FileNotFoundError(f"GPT api key file not found: {file_path}")
     with open(file_path, "r") as f:
         data = json.load(f)
-        key = data["gpt"]
+        key = data[key_name]
     return key
 
 
@@ -77,53 +81,80 @@ def encode_image(image, image_format="png", img_size=128):
 def img2text(
     image, 
     api_key, 
-    model="gpt-4o", 
+    model_name="gpt-4o-az",  # gpt-4o, gpt-4o-az, llava
+    model=None,
     query="How many pushpins are there?", 
-    temperature=None, 
-    top_p=None,
+    temperature=0.1, 
+    top_p=0.1,
     img_size=128,
     max_tokens=300,
 ):
     """
     image text extracton using LLM model, so far only support gpt-4o model
-    # TODO
     # add other LLM model, particular for some small model for the ablation study
     args:
         image: str, path to the image, numpy array or tensor
     """
+    if model_name in ["gpt-4o", "gpt-3.5-turbo", "gpt-4o-az"]:
+        if model_name == "gpt-4o-az":
+            api_dict = key_extraction(api_key, key_name="gpt-az")
+            api_key = api_dict["key"]
+            endpoint = api_dict["endpoint"] # specific end point for GPT4V
+        else:
+            api_key = key_extraction(api_key)
+            endpoint = "https://api.openai.com/v1/chat/completions"
+        # Getting the base64 string
+        base64_image = encode_image(image, img_size=img_size)
+        payload = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": f"{query}"},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}},
+                    ],
+                }
+            ],
+            "max_tokens": max_tokens,
+        }
 
-    api_key = key_extraction(api_key)
-    # Getting the base64 string
-    base64_image = encode_image(image, img_size=img_size)
+        if temperature is not None:
+            payload["temperature"] = temperature
+        if top_p is not None:
+            payload["top_p"] = top_p
+        if model_name == "gpt-4o":
+            payload["model"] = "gpt-4o"
+            headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
+        else:
+            headers = {"Content-Type": "application/json", "api-key": api_key}
 
-    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
-
-    payload = {
-        "model": model,
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": f"{query}"},
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}},
-                ],
-            }
-        ],
-        "max_tokens": max_tokens,
-    }
-
-    if temperature is not None:
-        payload["temperature"] = temperature
-    if top_p is not None:
-        payload["top_p"] = top_p
-
-    try:
-        response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-        output = response.json()
-    except Exception as e:
-        print(f"Have problem in extracting text, Error in the request: {e}")
-        output = None
+        try:
+            response = requests.post(endpoint, headers=headers, json=payload)
+            output = response.json()
+        except Exception as e:
+            print(f"Have problem in extracting text, Error in the request: {e}")
+            output = None
+    else:
+        output = llava_inference(
+            model=model, 
+            prompt=query, 
+            path=image, 
+            max_new_tokens=max_tokens
+        )
+    
     return output
+
+def load_azure_openai_client(api_key, model_name_key="gpt-4o"):
+    api_dict = key_extraction(api_key, key_name="gpt-az")
+    client = AzureOpenAI(
+        api_key = api_dict["key"],  
+        api_version = api_dict["api_version"],
+        azure_endpoint = api_dict["azure_endpoint"]
+    )
+    return {
+        "client": client,
+        "model_name": api_dict[model_name_key]
+    }
 
 
 def txt2embedding(
@@ -134,7 +165,14 @@ def txt2embedding(
     """
     use openai to get the embedding of the text
     """
-    client = OpenAI(api_key=key_extraction(api_key))
+    assert model in ["text-embedding-3-large", "text-embedding-3-large-az"], "model not supported"
+    
+    if model == "text-embedding-3-large-az":
+        output = load_azure_openai_client(api_key, model_name_key="embedding") 
+        client, model = output["client"], output["model_name"]
+    else:
+        api_key = key_extraction(api_key)
+        client = OpenAI(api_key=key_extraction(api_key))
 
     response = client.embeddings.create(input=input_text, model=model)
     return response.data[0].embedding
@@ -153,12 +191,20 @@ def txt2sum(
     """
     use openai to get the summarization of the text
     """
+    
     if top_p is None:
         top_p = NotGiven
     if temp is None:
         temp = NotGiven
-    api_key = key_extraction(api_key)
-    client = OpenAI(api_key=api_key)
+
+    if model == "gpt-4o-az":
+        output = load_azure_openai_client(api_key)
+        client, model = output["client"], output["model_name"]
+    elif model == "gpt-4o":
+        api_key = key_extraction(api_key)
+        client = OpenAI(api_key=api_key)
+    else:
+        raise ValueError("model not supported")
 
     response = client.chat.completions.create(
         model=model,
@@ -172,19 +218,6 @@ def txt2sum(
         ],
     )
 
-    # response = client.chat.completions.create(
-    #     model=model,
-    #     response_format={"type": "json_object"},
-    #     messages=[
-    #         {
-    #             "role": "system",
-    #             "content": system_message,
-    #         },
-    #         {"role": "user", "content": f"Can you summarize as following format, {few_shot_message}? {input_text}"},
-    #     ],
-    #     temperature=temp,
-    #     top_p=top_p,
-    # )
     try:
         output = response.choices[0].message.content
     except Exception as e:
@@ -201,8 +234,15 @@ def txt2formal(
     """
     use openai to get the formalization of the text
     """
-    api_key = key_extraction(api_key)
-    client = OpenAI(api_key=api_key)
+
+    if model == "gpt-4o-az":
+        output = load_azure_openai_client(api_key)
+        client, model = output["client"], output["model_name"]
+    elif model == "gpt-4o":
+        api_key = key_extraction(api_key)
+        client = OpenAI(api_key=api_key)
+    else:
+        raise ValueError("model not supported")
 
     prompt0 = prompt['prompt']
     syn_rules = prompt['syn_rules']

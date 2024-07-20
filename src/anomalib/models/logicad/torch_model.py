@@ -16,13 +16,16 @@ from anomalib.utils.llm import (
     img2text,
     txt2sum,
     txt2embedding,
-    load_gdino_model
+    load_gdino_model,
+    load_model,
 )
+
 from .sliding_window import (
     dino_image_transform,
     get_bbx_from_query,
     calculate_centroidmap_disance,
 )
+
 
 class LogicadModel(nn.Module):
     """
@@ -32,15 +35,17 @@ class LogicadModel(nn.Module):
         self,
         api_key: str,
         category: str,
-        model_vlm: str = "gpt-4o",
+        model_vlm: str = "gpt-4o-az",
+        model_llm: str = "gpt-4o-az",
         top_p = None,
         temp = None,
         max_token = 300,
         img_size=128,
         img2txt_db: str ="./dataset/loco.json",
-        model_embedding: str = "text-embedding-3-large",
+        model_embedding: str = "text-embedding-3-large-az",
         sliding_window: bool = False,
         gdino_cfg: str= "swint",
+        device: str = "cuda:1",
     ) -> None:
         super().__init__()
         self.api_key = api_key
@@ -51,12 +56,18 @@ class LogicadModel(nn.Module):
         self.top_p = top_p
         self.temp = temp
         self.model_vlm = model_vlm
+        self.model_llm = model_llm
         self.model_embedding = model_embedding
         self.reference_embedding = None
         self.reference_summation = None
         self.reference_img_features = None
         self.img2txt_db_path = img2txt_db
         self.img2txt_db_dict: dict = init_json(img2txt_db)
+
+        if model_vlm not in ["gpt-4o", "gpt-4o-turbo", "gpt-4o-az"]:
+            self.model_vlm_pipeline = load_model(model_vlm, "image-to-text", device=device)
+        else:
+            self.model_vlm_pipeline = None
 
         # only activate groudingdino if we applying sliding window
         self.gdino_model = load_gdino_model(cfg=gdino_cfg) if sliding_window else None
@@ -83,13 +94,17 @@ class LogicadModel(nn.Module):
                 image_path, 
                 self.api_key, 
                 query=prompt, 
-                model=self.model_vlm,
+                model_name=self.model_vlm,
+                model=self.model_vlm_pipeline,
                 max_tokens=self.max_token,
                 img_size=self.img_size,
                 temperature=self.temp,
-                top_p=self.top_p
+                top_p=self.top_p,
             )
-            text = text["choices"][0]["message"]["content"]
+            try:
+                text = text["choices"][0]["message"]["content"]
+            except:
+                text = text.split("\nASSISTANT")[-1][2:] # llava model
             return text 
         prompt = TEXT_EXTRACTOR_PROMPTS[self.category]
         if image_path in self.img2txt_db_dict:
@@ -112,7 +127,7 @@ class LogicadModel(nn.Module):
             input_text=text,
             few_shot_message=template,
             api_key=self.api_key,
-            model=self.model_vlm
+            model=self.model_llm
         )
         return summary
 

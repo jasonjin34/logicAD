@@ -15,8 +15,8 @@ dataset:
     eval: null
   test_split_mode: from_dir # options: [from_dir, synthetic]
   test_split_ratio: 0.2 # fraction of train images held out testing (usage depends on test_split_mode)
-  val_split_mode: same_as_test # options: [same_as_test, from_test, synthetic]
-  val_split_ratio: 0.5 # fraction of train/test images held out for validation (usage depends on val_split_mode)
+  val_split_mode: from_test # options: [same_as_test, from_test, synthetic]
+  val_split_ratio: 0.01 # fraction of train/test images held out for validation (usage depends on val_split_mode)
   tiling:
     apply: false
     tile_size: null
@@ -30,10 +30,13 @@ model:
   category: ${dataset.category}
   img2txt_db: ./datasets/${dataset.category}/img2text.json
   key_path: ./keys/gpt.json
-  model_vlm: gpt-4o
-  model_embedding: text-embedding-3-large
+  model_vlm: gpt-4o-az # options: [gpt-4o, llava16, gpt-4o-az]
+  model_llm: gpt-4o-az # options: [gpt-4o, gpt-4o-az]
+  model_embedding: text-embedding-3-large-az # options: [text-embedding-3-large, text-embedding-3-large-az]
   temp: None
   top_p: None
+  max_token: 300
+  img_size: ${dataset.image_size}
   sliding_window: false # options: [true, false], divide conqour
   gdino_cfg: swint
   k_shot: 1

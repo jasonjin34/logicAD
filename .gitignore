@@ -179,3 +179,5 @@ runs/
 
 # ignore all jupyter notebook file
 *.ipynb
+./.tmp/
+.tmp/*

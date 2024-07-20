@@ -24,7 +24,9 @@ class Logicad(AnomalyModule):
         self,
         category: str = "breakfast_box",
         key_path: str = "",
-        model_vlm: str = "gpt-4o",
+        model_vlm: str = "gpt-4o-az",
+        model_llm: str = "gpt-4o-az",
+        model_embedding: str = "text-embedding-3-large",
         temp = None,
         top_p = None,
         max_token = 300,
@@ -32,7 +34,6 @@ class Logicad(AnomalyModule):
         img2txt_db: str=  "./dataset/loco.json",
         sliding_window: bool = False,
         gdino_cfg: str= "swint",
-        model_embedding: str = "text-embedding-3-large",
         k_shot: int = 1,
     ) -> None:
         super().__init__()
@@ -45,8 +46,9 @@ class Logicad(AnomalyModule):
             top_p=top_p,
             img2txt_db=img2txt_db,
             model_vlm=model_vlm,
-            sliding_window=sliding_window,
+            model_llm=model_llm,
             model_embedding=model_embedding,
+            sliding_window=sliding_window,
         )
         self.gdino_cfg = gdino_cfg
         self.sliding_window = sliding_window
@@ -117,6 +119,7 @@ class LogicadLightning(Logicad):
             model_vlm=hparams.model.model_vlm,
             img2txt_db=hparams.model.img2txt_db,
             model_embedding=hparams.model.model_embedding,
+            model_llm=hparams.model.model_llm,
             max_token=hparams.model.max_token,
             img_size=hparams.model.img_size,
             k_shot=hparams.model.k_shot,
