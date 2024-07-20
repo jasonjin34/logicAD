@@ -22,6 +22,10 @@ from anomalib.models.logicad.text_prompt import PROMPT0, RULE
 api = "../keys/gpt.json"
 ```
 
+```python
+
+```
+
 ## Please modify the text_prompt in anomalib.models.logicad.text_prompt file
 
 ### https://github.com/jasonjin34/logicAD/blob/master/src/anomalib/models/logicad/text_prompt.py
