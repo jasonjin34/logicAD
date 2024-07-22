@@ -95,6 +95,7 @@ def img2text(
     img_size=128,
     max_tokens=300,
     seed=42,
+    ref_img=None,
 ):
     """
     image text extracton using LLM model, so far only support gpt-4o model
@@ -134,7 +135,6 @@ def img2text(
                     "content": user_content,
                 },
             ],
-            "seed": seed
         }
 
         if temperature is not None:
