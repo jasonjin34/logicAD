@@ -83,7 +83,8 @@ python tools/train.py --model logicad
 | juice_bottle     | 68,4    | 75,2  | N/A      | N/A     | 
 | pushpings        | 74.4    | 69.1   | N/A      | N/A     | 
 | screw_bag        | 81.6    | 76.1  | N/A      | N/A     | 
-| slicing connector| 90.08   | 86.9  | N/A      | N/A     | 
+| slicing connector| 90.08  | 86.9  | N/A      | N/A     | 
+| slicing connector (w geo loss)| 94.4  | 92.3  | N/A      | N/A     | 
 
 * AnomalyMOE is the CVPR 2024 VAND challenge winner
 
