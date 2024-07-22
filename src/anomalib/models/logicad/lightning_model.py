@@ -61,6 +61,7 @@ class Logicad(AnomalyModule):
         self.reference_summation: list[str] = []
         self.reference_embedding: list[Tensor] = []
         self.reference_img_features = []
+        self.reference_img_paths: list[str] = []
 
     def configure_optimizers(self) -> None:
         return None
@@ -82,9 +83,9 @@ class Logicad(AnomalyModule):
             self.reference_summation.append(text_summation)
             embedding = self.model.text_embedding(input_text=text_summation)
             self.reference_embedding.append(embedding)
-            # if self.sliding_window:
             self.reference_img_features.append(self.model.generate_centroid_points(path))
-        self.model.init_reference(self.reference_summation, self.reference_embedding, self.reference_img_features)
+            self.reference_img_paths.append(path)
+        self.model.init_reference(self.reference_summation, self.reference_embedding, self.reference_img_features, self.reference_img_paths)
         print("Reference images: ", self.reference_summation)
         
     def validation_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> STEP_OUTPUT:

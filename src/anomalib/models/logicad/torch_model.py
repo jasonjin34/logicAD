@@ -65,6 +65,7 @@ class LogicadModel(nn.Module):
         self.reference_embedding = None
         self.reference_summation = None
         self.reference_img_features = None
+        self.reference_img_paths = None
         self.img2txt_db_path = img2txt_db
         self.img2txt_db_dict: dict = init_json(img2txt_db)
 
@@ -77,10 +78,11 @@ class LogicadModel(nn.Module):
         # self.gdino_model = load_gdino_model(cfg=gdino_cfg) if sliding_window else None
         self.gdino_model = load_gdino_model(cfg=gdino_cfg)
     
-    def init_reference(self, reference_summation, reference_embedding, reference_img_features):
+    def init_reference(self, reference_summation, reference_embedding, reference_img_features, reference_img_paths):
         self.reference_summation = reference_summation
         self.reference_embedding = reference_embedding
         self.reference_img_features = reference_img_features
+        self.reference_img_paths = reference_img_paths
     
     def generate_centroid_points(self, image_path):
         if self.gdino_model is None:
@@ -112,6 +114,7 @@ class LogicadModel(nn.Module):
                 temperature=self.temp,
                 top_p=self.top_p,
                 seed=self.seed,
+                ref_img=self.reference_img_paths
             )
 
             if self.cropping_patch:
@@ -177,7 +180,7 @@ class LogicadModel(nn.Module):
         return embedding
     
     def genenerate_img_features_score(self, x):
-        if self.category in ["pushpins", "splicing_connectors"]:
+        if self.category in ["pushpins", "splicing_connectors", "juice_bottle"]:
             x_centroid_points = self.generate_centroid_points(x)
             score = []
             for ref_img in self.reference_img_features:
