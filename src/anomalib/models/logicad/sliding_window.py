@@ -73,14 +73,23 @@ def patch_extraction_from_box(image, boxes, patch=1):
     return output_image 
 
 
+QUERY_DICT = {
+    "splicing_connectors": "connectors without cable",
+    "pushpins": "pushpin"
+}
+    
+
 def get_bbx_from_query(
     image, 
     model, 
-    query="pushpin", 
+    query="pushpins", 
     box_threshold=0.35, 
     text_threshold=0.35,
     device="cuda"
 ):
+    global QUERY_DICT
+    if query in QUERY_DICT:
+        query = QUERY_DICT[query]
     boxes, logits, phrases = predict(
         model=model, 
         image=image, 

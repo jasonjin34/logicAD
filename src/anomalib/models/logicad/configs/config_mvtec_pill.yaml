@@ -2,7 +2,7 @@ dataset:
   name: mvtec
   format: mvtec
   path: ./datasets/MVTec/
-  task: segmentation
+  task: classification 
   category: pill 
   train_batch_size: 1
   eval_batch_size: 1

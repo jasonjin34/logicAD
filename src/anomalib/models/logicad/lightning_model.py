@@ -33,7 +33,9 @@ class Logicad(AnomalyModule):
         img_size = 128,
         img2txt_db: str=  "./dataset/loco.json",
         sliding_window: bool = False,
+        croping_patch: bool = False,
         gdino_cfg: str= "swint",
+        seed: int = 42,
         k_shot: int = 1,
     ) -> None:
         super().__init__()
@@ -47,8 +49,10 @@ class Logicad(AnomalyModule):
             img2txt_db=img2txt_db,
             model_vlm=model_vlm,
             model_llm=model_llm,
+            seed = seed,
             model_embedding=model_embedding,
             sliding_window=sliding_window,
+            croping_patch=croping_patch
         )
         self.gdino_cfg = gdino_cfg
         self.sliding_window = sliding_window
@@ -78,8 +82,8 @@ class Logicad(AnomalyModule):
             self.reference_summation.append(text_summation)
             embedding = self.model.text_embedding(input_text=text_summation)
             self.reference_embedding.append(embedding)
-            if self.sliding_window:
-                self.reference_img_features.append(self.model.generate_centroid_points(path))
+            # if self.sliding_window:
+            self.reference_img_features.append(self.model.generate_centroid_points(path))
         self.model.init_reference(self.reference_summation, self.reference_embedding, self.reference_img_features)
         print("Reference images: ", self.reference_summation)
         
@@ -101,7 +105,6 @@ class Logicad(AnomalyModule):
         score = self.model(batch["image_path"])
         score = torch.tensor([score], device=batch['label'].device)
         batch["pred_scores"] = score
-        batch["anomaly_maps"] = batch["mask"]
         return batch
 
 
@@ -123,7 +126,9 @@ class LogicadLightning(Logicad):
             max_token=hparams.model.max_token,
             img_size=hparams.model.img_size,
             k_shot=hparams.model.k_shot,
+            seed=hparams.model.seed,
             sliding_window=hparams.model.sliding_window,
+            croping_patch=hparams.model.croping_patch,
             gdino_cfg=hparams.model.gdino_cfg,
         )
         self.hparams: DictConfig | ListConfig  # type: ignore
