@@ -80,7 +80,7 @@ python tools/train.py --model logicad
 |Metrics           | i-auroc | i-f1  | i-auroc  | i-f1    |
 | average          | **81.46** | 78,72    | 67.6     | 79.25   | 
 | breakfast_box    | 93.0    | 82.7  | N/A      | N/A     | 
-| juice_bottle     | 68,4    | 75,2  | N/A      | N/A     | 
+| juice_bottle     | 72,4    | 77,2  | N/A      | N/A     | 
 | pushpings        | 74.4    | 69.1   | N/A      | N/A     | 
 | screw_bag        | 81.6    | 76.1  | N/A      | N/A     | 
 | slicing connector| 90.08  | 86.9  | N/A      | N/A     | 
