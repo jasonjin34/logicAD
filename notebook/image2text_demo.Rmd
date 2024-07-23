@@ -14,6 +14,9 @@ jupyter:
 ---
 
 ```{python}
+# %load_ext autoreload
+# %autoreload 2
+
 from anomalib.utils.llm import img2text, txt2sum
 ```
 
@@ -24,6 +27,11 @@ path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini/juice_bottle/train
 query = "Describe this juice bottle's characteristics, is the bottle full? locations of label and is objects"
 
 api = "/home/erjin/git/Logic_AD_LLM/keys/gpt.json"
+```
+
+```{python}
+path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec/cable/test/combined/007.png"
+img2text(path, api, query="describe this cable image")["choices"][0]["message"]["content"]
 ```
 
 ```{python}

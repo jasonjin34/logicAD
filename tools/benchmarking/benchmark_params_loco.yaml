@@ -1,0 +1,19 @@
+seed: 42
+compute_openvino: false
+hardware:
+  - cpu
+writer:
+  - csv
+  # - tensorboard
+grid_search:
+  dataset:
+    name: mvtec_loco
+    category:
+      # - breakfast_box 
+      - juice_bottle
+      - pushpins
+      - screw_bag
+      - splicing_connectors
+    image_size: [240]
+  model_name:
+    - logicad

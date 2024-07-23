@@ -39,6 +39,10 @@ from anomalib.models.logicad.sliding_window import (
     calculate_centroidmap_disance
 )
 
+test_good_image_dir = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/original/pushpins/test/good/"
+test_an_image_dir = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/original/pushpins/test/logical_anomalies/"
+train_img =  "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/original/pushpins/train/good/024.png"
+
 gdino_ckpt = "/home/erjin/git/Logic_AD_LLM/datasets/GroundingDino/groundingdino_swint_ogc.pth"
 api = "/home/erjin/git/Logic_AD_LLM/keys/gpt.json"
 model = load_gdino_model(ckpt_path=gdino_ckpt)
@@ -92,8 +96,8 @@ def generate_reference_points(
         boxes, _, _ = get_bbx_from_query(
             img, 
             model=model, 
-            box_threshold=0.35, 
-            text_threshold=0.35, 
+            box_threshold=0.30, 
+            text_threshold=0.30, 
             query="pushpin",
         )
         return boxes[:, :2]
@@ -103,8 +107,6 @@ def generate_reference_points(
 ```
 
 ```{python}
-test_good_image_dir = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/original/pushpins/test/good/"
-test_an_image_dir = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/original/pushpins/test/logical_anomalies/"
 good_centroid_list = generate_object_centroid(gdino_model=model, dir_path=test_good_image_dir)
 ab_centroid_list = generate_object_centroid(gdino_model=model, dir_path=test_an_image_dir)
 ```
@@ -115,6 +117,7 @@ reference_img = generate_reference_points(train_img=train_img)
 ```
 
 ```{python}
+
 def evaluation(
     test_good,
     test_ab,
@@ -133,6 +136,7 @@ def evaluation(
 
     y = gt_test_good + gt_test_ab
     y_pred = test_good + test_ab
+    print(y_pred[:10])
     print(f"f1 max {calculate_f1_max(y, y_pred)}\n") 
     print(f"auroc {calculate_auroc(y, y_pred)}\n") 
 ```
@@ -143,4 +147,8 @@ evaluation(
     test_ab = ab_centroid_list,
     reference_img = reference_img,
 )
+```
+
+```{python}
+
 ```

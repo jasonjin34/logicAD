@@ -1,22 +1,22 @@
 dataset:
-  name: visa
-  format: visa
-  path: ./datasets/VISA
-  task: segmentation
-  category: candle 
-  train_batch_size: 32
-  eval_batch_size: 16
-  num_workers: 8
-  image_size: 448 # dimensions to which images are resized (mandatory)
-  center_crop: 448 # dimensions to which images are center-cropped after resizing (optional)
-  normalization: imagenet # data distribution to which the images will be normalized: [none, imagenet]
+  name: mvtec_loco 
+  format: mvtec_loco 
+  path: ./datasets/MVTec_Loco/mini
+  task: classification 
+  category: splicing_connectors 
+  train_batch_size: 1
+  eval_batch_size: 1
+  num_workers: 1
+  image_size: 480 # 448  dimensions to which images are resized (mandatory)
+  center_crop: 480 # 448 # dimensions to which images are center-cropped after resizing (optional)
+  normalization: none # data distribution to which the images will be normalized: [none, imagenet]
   transform_config:
     train: null
     eval: null
   test_split_mode: from_dir # options: [from_dir, synthetic]
   test_split_ratio: 0.2 # fraction of train images held out testing (usage depends on test_split_mode)
-  val_split_mode: same_as_test # options: [same_as_test, from_test, synthetic]
-  val_split_ratio: 0.5 # fraction of train/test images held out for validation (usage depends on val_split_mode)
+  val_split_mode: from_test # options: [same_as_test, from_test, synthetic]
+  val_split_ratio: 0.001 # fraction of train/test images held out for validation (usage depends on val_split_mode)
   tiling:
     apply: false
     tile_size: null
@@ -24,66 +24,28 @@ dataset:
     remove_border_count: 0
     use_random_tiling: False
     random_tile_count: 16
-  
-backbone_vitb16:
-  backbone: ViT-B-16
-  pretrained: laion400m_e32 
-backbone_vitb16l:
-  backbone: ViT-B-16
-  pretrained: laion2b_s34b_b88k
-backbone_vitb16q:
-  backbone: ViT-B-16-quickgelu
-  pretrained: metaclip_fullcc
-backbone_vitb16plus240:
-  backbone: ViT-B-16-plus-240
-  pretrained: laion400m_e32
-backbone_vitb14l:
-  backbone: ViT-L-14
-  pretrained: laion400m_e32 
-backbone_vitl14ll:
-  backbone: ViT-L-14
-  pretrained: commonpool_xl_laion_s13b_b90k 
-backbone_vitl14b90k:
-  backbone: ViT-L-14
-  pretrained: datacomp_xl_s13b_b90k
-backbone_vitb14b90k:
-  backbone: ViT-B-16
-  pretrained: datacomp_xl_s13b_b90k
-backbone_eva:
-  backbone: EVA02-B-16
-  pretrained: merged2b_s8b_b131k 
-backbone_eval14:
-  backbone: EVA02-L-14
-  pretrained: merged2b_s4b_b131k 
 
 model:
-  name: sclipad
-  backbone:   ${backbone_vitb16l.backbone}
-  pretrained: ${backbone_vitb16l.pretrained}
-  ckpt: ""
-  img_size: ${dataset.image_size}
-  patch_size: 16
+  name: logicad
   category: ${dataset.category}
-  k_shot: 4
-  zero_shot: True
+  img2txt_db: ./datasets/${dataset.category}/img2text.json
+  key_path: ./keys/gpt.json
+  model_vlm: gpt-4o-az # options: [gpt-4o, llava16, gpt-4o-az]
+  model_llm: gpt-4o-az # options: [gpt-4o, gpt-4o-az]
+  model_embedding: text-embedding-3-large-az # options: [text-embedding-3-large, text-embedding-3-large-az]
+  temp: 0.05
+  top_p: 0.1 
+  max_token: 500
+  img_size: ${dataset.image_size}
+  sliding_window: false # options: [true, false], divide conqour
+  croping_patch: true
+  gdino_cfg: swint
+  k_shot: 1
+  seed: 44
   normalization_method: min_max # options: [null, min_max, cdf]
-  feature_layer: -1
-  cls_type_windows: max
-  text_prompt_type: standard
-  few_shot_topk: 3
-  apply_key_smoothing: true
-  isCSA: true
-  clsCSA: false
-  apply_sliding_windows: true 
-  text_adapter: 0.2
-  image_adapter: 0.2
-  attn_logit_scale: 1.5
 
 metrics:
   image:
-    - F1Score
-    - AUROC
-  pixel:
     - F1Score
     - AUROC
   threshold:
@@ -103,7 +65,7 @@ project:
   path: ./results
 
 logging:
-  logger: [] # options: [comet, tensorboard, wandb, csv] or combinations.
+  logger: [csv] # options: [comet, tensorboard, wandb, csv] or combinations.
   log_graph: false # Logs the model graph to respective logger.
 
 optimization:

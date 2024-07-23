@@ -12,15 +12,23 @@ from numpy.linalg import norm
 from typing import Union
 from PIL import Image
 import io
+import pdb
+from openai._types import NotGiven
+from openai import AzureOpenAI
+
+from .vlm import llava_inference
 
 
 def image2base64(image: Union[np.ndarray, Image.Image], image_format: str = "JPEG", quality: int = 100) -> str:
-    if isinstance(image, np.ndarray):
-        im = Image.fromarray(image)
-    elif isinstance(image, Image.Image):
-        im = image
-    else:
-        raise ValueError(f"image should be np.ndarray or PIL.Image, not {type(image)}")
+    try:
+        if isinstance(image, np.ndarray):
+            im = Image.fromarray(image)
+        elif isinstance(image, Image.Image):
+            im = image
+        else:
+            raise ValueError(f"image should be np.ndarray or PIL.Image, not {type(image)}")
+    except Exception as e:
+        print(f"Error in converting image to base64")
 
     buffered = io.BytesIO()
     im.save(buffered, format=image_format, quality=quality)
@@ -36,25 +44,38 @@ def cos_sim(a, b):
     return cos_sim
 
 
-def key_extraction(file_path):
+def key_extraction(file_path, key_name="gpt"):
     if os.path.exists(file_path) is False:
         raise FileNotFoundError(f"GPT api key file not found: {file_path}")
     with open(file_path, "r") as f:
         data = json.load(f)
-        key = data["gpt"]
+        key = data[key_name]
     return key
 
 
+def resize_image(image, img_size=None):
+    img = Image.open(image)
+    if img_size is None:
+        return img
+    else:
+        if not isinstance(img_size, int):
+            img_size = img_size[0]
+        wpercent = img_size / float(img.size[0])
+        hsize = int((float(img.size[1]) * float(wpercent)))
+        img = img.resize((img_size, hsize), Image.Resampling.LANCZOS)
+        return img
+
+
 # Function to encode the image
-def encode_image(image, image_format="png"):
+def encode_image(image, image_format="png", img_size=None):
     """
     convert the code to base64
     """
     if isinstance(image, str):  # if the image is a path
         image_path = image
-        with open(image_path, "rb") as image_file:
-            img = image_file.read()
-            img = base64.b64encode(img).decode("utf-8")
+        img = resize_image(image_path, img_size=img_size)
+        img = image2base64(img, image_format=image_format)
+        # img = base64.b64encode(img).decode("utf-8")
     else:  # if the image is a numpy array or tensor
         if isinstance(image, torch.Tensor):
             # convert B, C, H, W to  H, W, C as numpy format
@@ -63,48 +84,87 @@ def encode_image(image, image_format="png"):
     return img
 
 
-def img2text(image, api_key, model="gpt-4o", query="How many pushpins are there?", temperature=None, top_p=None):
+def img2text(
+    image,
+    api_key,
+    model_name="gpt-4o-az",  # gpt-4o, gpt-4o-az, llava
+    model=None,
+    query="How many pushpins are there?",
+    temperature=0.1,
+    top_p=0.1,
+    img_size=128,
+    max_tokens=300,
+    seed=42,
+    ref_img=None,
+):
     """
     image text extracton using LLM model, so far only support gpt-4o model
-    # TODO
     # add other LLM model, particular for some small model for the ablation study
-
     args:
         image: str, path to the image, numpy array or tensor
     """
+    if model_name in ["gpt-4o", "gpt-3.5-turbo", "gpt-4o-az"]:
+        if model_name == "gpt-4o-az":
+            api_dict = key_extraction(api_key, key_name="gpt-az")
+            api_key = api_dict["key"]
+            endpoint = api_dict["endpoint"]  # specific end point for GPT4V
+        else:
+            api_key = key_extraction(api_key)
+            endpoint = "https://api.openai.com/v1/chat/completions"
+        # Getting the base64 string
+        base64_image = encode_image(image, img_size=img_size)
 
-    api_key = key_extraction(api_key)
-    # Getting the base64 string
-    base64_image = encode_image(image)
+        image_query = {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
 
-    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
+        if isinstance(query, list):
+            list_text_query_dict = [{"type": "text", "text": q} for q in query]
+        else:
+            list_text_query_dict = [{"type": "text", "text": query}]
+        user_content = [image_query] + list_text_query_dict
 
-    payload = {
-        "model": model,
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": f"{query}"},
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}},
-                ],
-            }
-        ],
-        "max_tokens": 300,
-    }
+        payload = {
+            "messages": [
+                {
+                    "role": "system",
+                    "content": [
+                        {"type": "text", "text": "You are an AI assistant that helps people find information."}
+                    ],
+                },
+                {
+                    "role": "user",
+                    "content": user_content,
+                },
+            ],
+        }
 
-    if temperature is not None:
-        payload["temperature"] = temperature
-    if top_p is not None:
-        payload["top_p"] = top_p
+        if temperature is not None:
+            payload["temperature"] = temperature
+        if top_p is not None:
+            payload["top_p"] = top_p
+        if model_name == "gpt-4o":
+            payload["model"] = "gpt-4o"
+            headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
+        else:
+            headers = {"Content-Type": "application/json", "api-key": api_key}
 
-    try:
-        response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-        output = response.json()
-    except Exception as e:
-        print(f"Have problem in extracting text, Error in the request: {e}")
-        output = None
+        try:
+            response = requests.post(endpoint, headers=headers, json=payload)
+            output = response.json()["choices"][0]["message"]["content"]
+        except Exception as e:
+            print(f"Have problem in extracting text, Error in the request: {e}")
+            output = None
+    else:
+        output = llava_inference(model=model, prompt=query, path=image, max_new_tokens=max_tokens)
+
     return output
+
+
+def load_azure_openai_client(api_key, model_name_key="gpt-4o"):
+    api_dict = key_extraction(api_key, key_name="gpt-az")
+    client = AzureOpenAI(
+        api_key=api_dict["key"], api_version=api_dict["api_version"], azure_endpoint=api_dict["azure_endpoint"]
+    )
+    return {"client": client, "model_name": api_dict[model_name_key]}
 
 
 def txt2embedding(
@@ -115,7 +175,14 @@ def txt2embedding(
     """
     use openai to get the embedding of the text
     """
-    client = OpenAI(api_key=key_extraction(api_key))
+    assert model in ["text-embedding-3-large", "text-embedding-3-large-az"], "model not supported"
+
+    if model == "text-embedding-3-large-az":
+        output = load_azure_openai_client(api_key, model_name_key="embedding")
+        client, model = output["client"], output["model_name"]
+    else:
+        api_key = key_extraction(api_key)
+        client = OpenAI(api_key=key_extraction(api_key))
 
     response = client.embeddings.create(input=input_text, model=model)
     return response.data[0].embedding
@@ -127,13 +194,28 @@ def txt2sum(
     api_key=None,
     model="gpt-4o",
     system_message="You are a helpful assistant designed to output JSON.",
-    max_token=100,
+    seed=42,
+    max_token=200,
+    top_p=None,
+    temp=None,
 ):
     """
     use openai to get the summarization of the text
     """
-    api_key = key_extraction(api_key)
-    client = OpenAI(api_key=api_key)
+
+    if top_p is None:
+        top_p = NotGiven
+    if temp is None:
+        temp = NotGiven
+
+    if model == "gpt-4o-az":
+        output = load_azure_openai_client(api_key)
+        client, model = output["client"], output["model_name"]
+    elif model == "gpt-4o":
+        api_key = key_extraction(api_key)
+        client = OpenAI(api_key=api_key)
+    else:
+        raise ValueError("model not supported")
 
     response = client.chat.completions.create(
         model=model,
@@ -145,7 +227,9 @@ def txt2sum(
             },
             {"role": "user", "content": f"Can you summarize as following format, {few_shot_message}? {input_text}"},
         ],
+        # seed=seed,
     )
+
     try:
         output = response.choices[0].message.content
     except Exception as e:
@@ -162,19 +246,26 @@ def txt2formal(
     """
     use openai to get the formalization of the text
     """
-    api_key = key_extraction(api_key)
-    client = OpenAI(api_key=api_key)
 
-    prompt0 = prompt['prompt']
-    syn_rules = prompt['syn_rules']
+    if model == "gpt-4o-az":
+        output = load_azure_openai_client(api_key)
+        client, model = output["client"], output["model_name"]
+    elif model == "gpt-4o":
+        api_key = key_extraction(api_key)
+        client = OpenAI(api_key=api_key)
+    else:
+        raise ValueError("model not supported")
 
-    if prompt.get('k_shot', True):
-        k_shot = prompt['k_shot']
+    prompt0 = prompt["prompt"]
+    syn_rules = prompt["syn_rules"]
+
+    if prompt.get("k_shot", True):
+        k_shot = prompt["k_shot"]
     else:
         k_shot = ""
-    
-    if prompt.get('query', True):
-        query = prompt['query']
+
+    if prompt.get("query", True):
+        query = prompt["query"]
     else:
         query = ""
 

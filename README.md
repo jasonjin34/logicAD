@@ -78,14 +78,39 @@ python tools/train.py --model logicad
 |MVTec-Loco        | LogicAD |       |AnomlyMoE |         | 
 |------------------|---------|-------|----------|---------|
 |Metrics           | i-auroc | i-f1  | i-auroc  | i-f1    |
-| average          | 81.46    | 78,72    | 67.6     | 79.25   | 
+| average          | **81.46** | 78,72    | 67.6     | 79.25   | 
 | breakfast_box    | 93.0    | 82.7  | N/A      | N/A     | 
-| juice_bottle     | 68,4    | 75,2  | N/A      | N/A     | 
+| juice_bottle     | 72,4    | 77,2  | N/A      | N/A     | 
 | pushpings        | 74.4    | 69.1   | N/A      | N/A     | 
 | screw_bag        | 81.6    | 76.1  | N/A      | N/A     | 
-| slicing connector| 90.08   | 86.9  | N/A      | N/A     | 
+| slicing connector| 90.08  | 86.9  | N/A      | N/A     | 
+| slicing connector (w geo loss)| 94.4  | 92.3  | N/A      | N/A     | 
 
 * AnomalyMOE is the CVPR 2024 VAND challenge winner
+
+## Experiment Results Compared with WinCLIP
+### MVTec-AD Evaluation Results compared with WinCLIP for Zero-Shot Learning
+|MVTec-AD   | LogicAD |          | WinCLIP |          |
+|-----------|---------|----------|---------|----------|
+|           | i-auroc | i-max-f1 | i-auroc | i-max-f1 |
+| **Logic/Obj** |---------|----------|---------|----------|
+| cable     |  79.0   |   79.2   | 86.5    | 84.5     |
+| capsule   |  84.7   |   92.17  | 72.9    | 91.4     |
+| bottle    |         |          | 99.2    | 97.6     |
+| screw     |  89.1   |   81.8   | 83.3    | 87.4     |
+| pill      |  61.8   |   91.6   | 79.1    | 91.6     |
+| hazelnut  |         |          | 93.9    | 89.7     |
+| zipper    |         |          | 91.5    | 92.9     |
+| metal_nut |         |          | 97.1    | 96.3     |
+| transistor|         |          | 88.0    | 79.5     |
+| toothbrush|         |          | 87.5    | 87.9     |
+| **Texture**   |---------|----------|---------|----------|
+| carpet    |         |          | 100     | 99.4     |
+| grid      |         |          | 98.8    | 98.2     |
+| leather   |         |          | 100.0   | 100      |
+| tile      |         |          | 100     | 99.4     |
+| wood      |         |          | 99.4    | 98.3     |
+| average   |         |          | 91.81 | 92.94    |
 
 ## Acknowledges 
 This package is built based on anomalib, openclip, lighting and hydra

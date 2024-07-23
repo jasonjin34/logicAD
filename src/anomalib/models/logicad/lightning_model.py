@@ -24,21 +24,35 @@ class Logicad(AnomalyModule):
         self,
         category: str = "breakfast_box",
         key_path: str = "",
-        model_vlm: str = "gpt-4o",
+        model_vlm: str = "gpt-4o-az",
+        model_llm: str = "gpt-4o-az",
+        model_embedding: str = "text-embedding-3-large",
+        temp = None,
+        top_p = None,
+        max_token = 300,
+        img_size = 128,
         img2txt_db: str=  "./dataset/loco.json",
         sliding_window: bool = False,
+        croping_patch: bool = False,
         gdino_cfg: str= "swint",
-        model_embedding: str = "text-embedding-3-large",
+        seed: int = 42,
         k_shot: int = 1,
     ) -> None:
         super().__init__()
         self.model: LogicadModel = LogicadModel(
             category=category,
             api_key=key_path,
+            max_token=max_token,
+            temp=temp,
+            img_size=img_size,
+            top_p=top_p,
             img2txt_db=img2txt_db,
             model_vlm=model_vlm,
-            sliding_window=sliding_window,
+            model_llm=model_llm,
+            seed = seed,
             model_embedding=model_embedding,
+            sliding_window=sliding_window,
+            croping_patch=croping_patch
         )
         self.gdino_cfg = gdino_cfg
         self.sliding_window = sliding_window
@@ -47,6 +61,7 @@ class Logicad(AnomalyModule):
         self.reference_summation: list[str] = []
         self.reference_embedding: list[Tensor] = []
         self.reference_img_features = []
+        self.reference_img_paths: list[str] = []
 
     def configure_optimizers(self) -> None:
         return None
@@ -68,9 +83,9 @@ class Logicad(AnomalyModule):
             self.reference_summation.append(text_summation)
             embedding = self.model.text_embedding(input_text=text_summation)
             self.reference_embedding.append(embedding)
-            if self.sliding_window:
-                self.reference_img_features.append(self.model.generate_centroid_points(path))
-        self.model.init_reference(self.reference_summation, self.reference_embedding, self.reference_img_features)
+            self.reference_img_features.append(self.model.generate_centroid_points(path))
+            self.reference_img_paths.append(path)
+        self.model.init_reference(self.reference_summation, self.reference_embedding, self.reference_img_features, self.reference_img_paths)
         print("Reference images: ", self.reference_summation)
         
     def validation_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> STEP_OUTPUT:
@@ -91,7 +106,6 @@ class Logicad(AnomalyModule):
         score = self.model(batch["image_path"])
         score = torch.tensor([score], device=batch['label'].device)
         batch["pred_scores"] = score
-        batch["anomaly_maps"] = batch["mask"]
         return batch
 
 
@@ -109,8 +123,13 @@ class LogicadLightning(Logicad):
             model_vlm=hparams.model.model_vlm,
             img2txt_db=hparams.model.img2txt_db,
             model_embedding=hparams.model.model_embedding,
+            model_llm=hparams.model.model_llm,
+            max_token=hparams.model.max_token,
+            img_size=hparams.model.img_size,
             k_shot=hparams.model.k_shot,
+            seed=hparams.model.seed,
             sliding_window=hparams.model.sliding_window,
+            croping_patch=hparams.model.croping_patch,
             gdino_cfg=hparams.model.gdino_cfg,
         )
         self.hparams: DictConfig | ListConfig  # type: ignore

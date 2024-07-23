@@ -88,6 +88,7 @@ class AnomalibDataset(Dataset, ABC):
         assert all(
             col in samples.columns for col in expected_columns
         ), f"samples must have (at least) columns {expected_columns}, found {samples.columns}"
+
         assert samples["image_path"].apply(lambda p: Path(p).exists()).all(), "missing file path(s) in samples"
 
         self._samples = samples.sort_values(by="image_path", ignore_index=True)

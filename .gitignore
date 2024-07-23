@@ -1,5 +1,5 @@
  Project related
-keys/gpt.jsoe
+keys/gpt.json
 # datasets
 pre_trained
 !anomalib/datasets
@@ -129,7 +129,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-logicad/
 .env
 .venv
 env/
@@ -184,3 +183,5 @@ runs/
 # experimental results
 
 datasets/proofs/
+./.tmp/
+.tmp/*
