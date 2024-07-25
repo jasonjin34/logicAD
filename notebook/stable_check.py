@@ -14,6 +14,7 @@ from sklearn.metrics import precision_recall_curve, roc_auc_score
 API = "/home/erjin/git/Logic_AD_LLM/keys/gpt.json"
 LOCO_DATASET_mini = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini"
 LOCO_DATASET_origin = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/original"
+MVTEC = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec"
 
 
 #################### help function for evaluation ########################
@@ -60,19 +61,36 @@ def cos_sim(a, b):
 # help functions for fast testing and ablation runnings
 def get_dataset_per_category(dataset, category, k_shot=1):
     def get_path_list(dir_path):
-        image_list = glob.glob(os.path.join(dir_path, "*"))
-        if "good" in image_list[0]:
-            label = 0
+        def path_extraction(dir_path):
+            image_list = glob.glob(os.path.join(dir_path, "*"))
+            if "good" in image_list[0]:
+                label = 0
+            else:
+                label = 1
+            label_list = [label] * len(image_list)
+            image_list = sorted(image_list, key=lambda x: int(os.path.basename(x)[:3]), reverse=False)
+            return label_list, image_list
+        if isinstance(dir_path, list):
+            label_list, image_list = [], [] 
+            for dp in dir_path:
+                tmp_label_list, tmp_image_list = path_extraction(dp)
+                label_list += tmp_label_list
+                image_list += tmp_image_list
         else:
-            label = 1
-        label_list = [label] * len(image_list)
-        image_list = sorted(image_list, key=lambda x: int(os.path.basename(x)[:3]), reverse=False)
+            label_list, image_list = path_extraction(dir_path)
+
+
         return image_list, label_list
 
     train_img = os.path.join(dataset, category, "train", "good")
-    test_good, test_ab = os.path.join(dataset, category, "test", "good"), os.path.join(
-        dataset, category, "test", "logical_anomalies"
-    )
+    test_good = os.path.join(dataset, category, "test", "good")
+
+    if "Loco" in dataset:
+        test_ab = os.path.join(dataset, category, "test", "logical_anomalies")
+    else:
+        test_ab = glob.glob(os.path.join(dataset, category, "test", "*"))
+        test_ab = [ab_dir for ab_dir in test_ab if "good" not in ab_dir]
+
     reference_img, _ = get_path_list(train_img)
     reference_img = reference_img[:k_shot]
     test_good_img, test_good_label = get_path_list(test_good)
@@ -86,17 +104,18 @@ def get_dataset_per_category(dataset, category, k_shot=1):
 
 
 def text_extraction(p, query, api=API):
-    return img2text(
+    text = img2text(
         p,
         api,
-        img_size=None,
+        img_size=400,
         query=query,
         temperature=0.05,
         top_p=0.05,
         max_tokens=500,
         model_name="gpt-4o-az",
         model=None,
-    )["choices"][0]["message"]["content"]
+    )
+    return text
 
 
 def generate_text_embedding(
