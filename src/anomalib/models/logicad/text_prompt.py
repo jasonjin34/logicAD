@@ -12,10 +12,23 @@ TEXT_EXTRACTOR_PROMPTS = {
     "screw_bag": "how many bolts, washers, and nuts? describe the length of the bolts using the longer bolt as reference (1/4, 1/2, 3/4, 1)",
     "splicing_connectors": "Answer this question if the image contain only one connector: which slot is the cable connected to (top one is the first one)?. Answer these questions if the image contain more than one connector: How many connectors are there? how many cables are there? is the cable broken or not? is the connector has the same size?",
     # mvtec category
-    "cable":  "is the image flawless? if the following conditionals are reach, then the image is flawness or defect?, (bent wire, cable with less than 3 color pattern, cut_inner_insulation, missing cable, scratch), give me only short answer and reason",
-    "pill": "is the pill flawless? if all the following conditions need are reach, no scratch, contanimination, no yellow spot, no crack, no fault print",
+    "cable": "is there any flaw, abnormal, cut, untwisted or splayed out wird in the image, yes or no with short reason? do the inner insulation have completely color?",
+    "pill": "is there any color other then sparse wine specks? do all specks have the same color? does the pill has crack or noticeable broken? is the pill has print FF flawlessly? pill is defect if one of the question is yes",
     "capsule": "does the capsule image contain scratch? does all parts intact or flawless? does the 500 print intact?",
-    "screw": "does the screw contains the following anomalies, broken thread side, flaw thread top, scratch and broken front"
+    "screw": "does the screw contains the following anomalies, broken thread side, flaw thread top, scratch and broken front",
+    "bottle": "is there any crack or broken part? is the center area uniformly dark? is there any object inside of the bottle? if one of the question is yes, then the bottle is defect", 
+    "transistor": "is the transistor case flawless? is the transistors properly mounted?",
+    "toothbrush": "is the bristels have similar length, not particular too long or too short? is there any empty whole in the toothbrush? is there any abnormal objects in the toothbrush?",
+    "hazelnut": "is hazelnut broken? is the hazelnut shell intact? is the hazelnut shell flawless? is the hazelnut has print or mark?",
+    "metal_nut": "does the metal nut contain any deep large scratch? are all lobes intact? is the metal contain color stain?",
+    "zipper": "Is there any flaw, abnormality, cut, broken fabric in the image, yes or no? any splitting, unclosed, squeezed teeth in the zipper?",
+    "wood": "is the wood flawless if there is no water mark, no scratch, no crack, no cut, no hole, give me a short reason",
+    "carpet": "is the carpet has any scratch or cut? is the carpet has any color stain? is the carpet has metal contamination?",
+    "leather": "is the leather flawless? (water mark is also consider as defect or flaw)",
+    "tile": "is the tile flawless or not? (only crack, scratch, color stain, roughness surface, liquid stain or piece of glue tape , grey stain, are consider as defect or flaw)",
+    "grid": "is the grid flawless or not? (only water mark, scratch, bent, broken and additional object are consider as defect or flaw)",
+    # visa category
+    "candle": "is the candle flawless?",
 }
 
 TEXT_SUMMATION_PROMPTS = {
@@ -26,10 +39,23 @@ TEXT_SUMMATION_PROMPTS = {
     "screw_bag": "number of objects, length of bolts",
     "splicing_connectors": "connector: {nummber of connectors}, cable: {nummber of cables, broken or not?}, patchs: {is both cable connected to the same slot on each side}",
     # mvtec category
-    "cable":  "is the object intact, flawless or perfect?",
-    "pill":  "conditions: true or false",
+    "cable":  "defect: {yes or no, defect reason}, three unique color: {yes or no}",
+    "pill":  "defect: {yes or no}, reason: {short reason}",
     "capsule":  "is the object intact, flawless or perfect?",
     "screw":  "flaw: {extend of flaw}",
+    "bottle": "crack: {yes or no}, center: {uniformlly black or not}, object: {yes or no}",
+    "transistor": "condition: ?",
+    "toothbrush": "bristels: {similar length or not}, empty hole: {yes or no}, abnormal object: {yes or no}",
+    "hazelnut": "is hazelnut broken, is hazelnut has cut? is hazelnut has print or mark?",
+    "metal_nut": "scratch: {yes or no}, intact lobes?: {yes or no}, broken : {yes or no}, color stain: {yes or no}",
+    'zipper': "defact: {yes or no}, reason: {short reason}",
+    "wood": "flaw: {yes or no}, reason: ",
+    "carpet": "defect: {yes or no}, reason: {short reason}",
+    "leather": "defect: {yes or no}, reason: {short reason}",
+    "tile": "defect: {yes or no}, reason: {short reason}",
+    "grid": "defect: {yes or no}, reason: {short reason}",
+    # visa category
+    "candle": "defect: {yes or no}, reason: {short reason}",
 }
 
 TEXT_NUM_OBJECTS_PROMPTS = {

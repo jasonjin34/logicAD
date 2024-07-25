@@ -1,6 +1,6 @@
 """Utility functions for the LLM model."""
 
-from .base import img2text, txt2sum, cos_sim, txt2embedding, encode_image, txt2formal
+from .base import img2text, txt2sum, cos_sim, txt2embedding, encode_image, txt2formal, txt2txt
 from .grounddino import load_gdino_model
 from .vlm import llava_inference, load_model
 
@@ -14,4 +14,5 @@ __all__ = [
     "txt2formal",
     "llava_inference",
     "load_model",
+    "txt2txt"
 ]

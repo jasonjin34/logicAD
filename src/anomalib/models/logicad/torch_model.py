@@ -2,7 +2,7 @@
 This is official Logic Anomaly Detection with LLM implementation by using Pytorch, Pytorch-Lightning and
 anomalib as general framework
 """
-from torch import Tensor, nn
+from torch import nn
 import numpy as np
 from .utils import init_json, update_json 
 
@@ -15,6 +15,7 @@ from anomalib.utils.llm import (
     cos_sim,
     img2text,
     txt2sum,
+    txt2txt,
     txt2embedding,
     load_gdino_model,
     load_model,
@@ -47,7 +48,9 @@ class LogicadModel(nn.Module):
         sliding_window: bool = False,
         croping_patch: bool = False,
         gdino_cfg: str= "swint",
-        device: str = "cuda:1",
+        device: str = "cuda:0",
+        wo_summation: bool = False,
+        num_text_extraction: int = 5,
     ) -> None:
         super().__init__()
         self.api_key = api_key
@@ -58,7 +61,9 @@ class LogicadModel(nn.Module):
         self.top_p = top_p
         self.temp = temp
         self.cropping_patch = croping_patch
+        self.num_text_extraction = num_text_extraction
         self.seed = seed
+        self.wo_summation= wo_summation
         self.model_vlm = model_vlm
         self.model_llm = model_llm
         self.model_embedding = model_embedding
@@ -66,6 +71,7 @@ class LogicadModel(nn.Module):
         self.reference_summation = None
         self.reference_img_features = None
         self.reference_img_paths = None
+        self.abnormal_ref_embedding = None
         self.img2txt_db_path = img2txt_db
         self.img2txt_db_dict: dict = init_json(img2txt_db)
 
@@ -78,11 +84,20 @@ class LogicadModel(nn.Module):
         # self.gdino_model = load_gdino_model(cfg=gdino_cfg) if sliding_window else None
         self.gdino_model = load_gdino_model(cfg=gdino_cfg)
     
-    def init_reference(self, reference_summation, reference_embedding, reference_img_features, reference_img_paths):
+    def init_reference(
+        self, 
+        reference_summation, 
+        reference_embedding, 
+        reference_img_features, 
+        reference_img_paths,
+    ):
         self.reference_summation = reference_summation
         self.reference_embedding = reference_embedding
         self.reference_img_features = reference_img_features
         self.reference_img_paths = reference_img_paths
+
+        if self.wo_summation:
+            self.reference_embedding = self.text_embedding(input_text=self.reference_img_paths[0])
     
     def generate_centroid_points(self, image_path):
         if self.gdino_model is None:
@@ -114,7 +129,6 @@ class LogicadModel(nn.Module):
                 temperature=self.temp,
                 top_p=self.top_p,
                 seed=self.seed,
-                ref_img=self.reference_img_paths
             )
 
             if self.cropping_patch:
@@ -142,28 +156,41 @@ class LogicadModel(nn.Module):
         if image_path in self.img2txt_db_dict:
             text = self.img2txt_db_dict[image_path]
         else:
-            text = text_retrival(image_path) 
+            text_list = []
+
+            for _ in range(self.num_text_extraction):
+                text_list.append(text_retrival(image_path))
+            
+            print(text_list)
+
+            test_list_str = str(text_list)
+            text = txt2txt(test_list_str, api_key=self.api_key, model=self.model_llm).replace('"', '')
+
             self.img2txt_db_dict[image_path] = text
             update_json(self.img2txt_db_path, self.img2txt_db_dict)
         return text
-    
+
     def text_summation(self, image_path, template="",):
         """
         Summarize the text
-        """
-        text = self.text_extraction(image_path)
+        """  
         if template == "":
             template = TEXT_SUMMATION_PROMPTS[self.category]
         
-        summary = txt2sum(
-            input_text=text,
-            few_shot_message=template,
-            api_key=self.api_key,
-            model=self.model_llm,
-            seed=self.seed,
-        )
-        return summary
-
+        text = self.text_extraction(image_path)
+        
+        if self.wo_summation:
+            return text
+        else:
+            summary = txt2sum(
+                input_text=text,
+                few_shot_message=template,
+                api_key=self.api_key,
+                model=self.model_llm,
+                seed=self.seed,
+            )
+            return summary
+    
     def text_embedding(
         self, 
         image_path = None,
@@ -199,6 +226,12 @@ class LogicadModel(nn.Module):
         )
         patches = patch_extraction_from_box(img, boxes, patch=2)
         return patches
+    
+    def generate_score(self, query):
+        score = cos_sim(query, self.reference_embedding[0])
+        ab_score = cos_sim(query, self.abnormal_ref_embedding)
+        output = 0 if score > ab_score else 1
+        return output
 
     def forward(self, x):
         try:
@@ -214,8 +247,11 @@ class LogicadModel(nn.Module):
             print(text_summation)
             embedding = self.text_embedding(input_text=text_summation)
             # calculate the similarity
-            score = 1 - cos_sim(embedding, self.reference_embedding[0])
-            print(geo_score)
+            if self.wo_summation:
+                score = 1 - cos_sim(embedding, self.reference_embedding)
+            else:
+                score = 1 - cos_sim(embedding, self.reference_embedding[0])
+            print("anomalib score:", score)
             score = score + geo_score
             return score
         except:

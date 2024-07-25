@@ -95,7 +95,6 @@ def img2text(
     img_size=128,
     max_tokens=300,
     seed=42,
-    ref_img=None,
 ):
     """
     image text extracton using LLM model, so far only support gpt-4o model
@@ -187,6 +186,53 @@ def txt2embedding(
     response = client.embeddings.create(input=input_text, model=model)
     return response.data[0].embedding
 
+def txt2txt(
+    input_text="",
+    query="select the most frequent or probable sentence from the list, please only give the sentence",
+    api_key=None,
+    model="gpt-4o",
+    system_message="You are an AI assistant that helps people find information.",
+    top_p=None,
+    temp=None,
+):
+    """
+    use openai to get the summarization of the text
+    """
+    if isinstance(input_text, list):
+        input_text = input_text[0]
+
+    if top_p is None:
+        top_p = NotGiven
+    if temp is None:
+        temp = NotGiven
+
+    if model == "gpt-4o-az":
+        output = load_azure_openai_client(api_key)
+        client, model = output["client"], output["model_name"]
+    elif model == "gpt-4o":
+        api_key = key_extraction(api_key)
+        client = OpenAI(api_key=api_key)
+    else:
+        raise ValueError("model not supported")
+
+    # response_format={"type": "json_object"},
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {
+                "role": "system",
+                "content": system_message,
+            },
+            {"role": "user", "content": f"{query}, {input_text}"},
+        ],
+    )
+
+    try:
+        output = response.choices[0].message.content
+    except Exception as e:
+        output = None
+    return output
+
 
 def txt2sum(
     input_text="",
@@ -227,6 +273,7 @@ def txt2sum(
             },
             {"role": "user", "content": f"Can you summarize as following format, {few_shot_message}? {input_text}"},
         ],
+        top_p=0.05
         # seed=seed,
     )
 

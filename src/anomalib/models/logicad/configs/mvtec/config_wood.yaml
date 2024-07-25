@@ -1,14 +1,14 @@
 dataset:
   name: mvtec
   format: mvtec
-  path: ./datasets/MVTec/
+  path: ./datasets/MVTec
   task: classification 
-  category: pill 
+  category: wood 
   train_batch_size: 1
   eval_batch_size: 1
   num_workers: 1
-  image_size: 128 # 448  dimensions to which images are resized (mandatory)
-  center_crop: 128 # 448 # dimensions to which images are center-cropped after resizing (optional)
+  image_size: 240 # 448  dimensions to which images are resized (mandatory)
+  center_crop: 240 # 448 # dimensions to which images are center-cropped after resizing (optional)
   normalization: none # data distribution to which the images will be normalized: [none, imagenet]
   transform_config:
     train: null
@@ -30,15 +30,18 @@ model:
   category: ${dataset.category}
   img2txt_db: ${dataset.path}/${dataset.category}/img2text.json
   key_path: ./keys/gpt.json
-  model_vlm: gpt-4o
-  max_token: 300
-  model_embedding: text-embedding-3-large
+  model_vlm: gpt-4o-az # options: [gpt-4o, llava16, gpt-4o-az]
+  model_llm: gpt-4o-az # options: [gpt-4o, gpt-4o-az]
+  model_embedding: text-embedding-3-large-az # options: [text-embedding-3-large, text-embedding-3-large-az]
+  temp: 0.05
+  top_p: 0.05 
+  max_token: 500
   img_size: ${dataset.image_size}
-  temp: 0.1
-  top_p: 0.1
   sliding_window: false # options: [true, false], divide conqour
+  croping_patch: false 
   gdino_cfg: swint
   k_shot: 1
+  seed: 44
   normalization_method: min_max # options: [null, min_max, cdf]
 
 metrics:
@@ -52,7 +55,7 @@ metrics:
 
 visualization:
   show_images: False # show images on the screen
-  save_images: True # save images to the file system
+  save_images: False # save images to the file system
   log_images: False # log images to the available loggers (if any)
   image_save_path: null # path to which images will be saved
   mode: full # options: ["full", "simple"]

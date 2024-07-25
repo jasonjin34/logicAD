@@ -85,7 +85,13 @@ class Logicad(AnomalyModule):
             self.reference_embedding.append(embedding)
             self.reference_img_features.append(self.model.generate_centroid_points(path))
             self.reference_img_paths.append(path)
-        self.model.init_reference(self.reference_summation, self.reference_embedding, self.reference_img_features, self.reference_img_paths)
+
+        self.model.init_reference(
+            self.reference_summation, 
+            self.reference_embedding, 
+            self.reference_img_features, 
+            self.reference_img_paths,
+        )
         print("Reference images: ", self.reference_summation)
         
     def validation_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> STEP_OUTPUT:
