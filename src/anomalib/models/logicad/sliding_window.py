@@ -76,7 +76,7 @@ def patch_extraction_from_box(image, boxes, patch=1):
 QUERY_DICT = {
     "splicing_connectors": "connectors without cable",
     "pushpins": "pushpin",
-    "juice_bottle": "small sticker",
+    "juice_bottle": "fruit",
 }
     
 

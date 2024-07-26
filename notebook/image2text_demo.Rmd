@@ -17,21 +17,30 @@ jupyter:
 # %load_ext autoreload
 # %autoreload 2
 
-from anomalib.utils.llm import img2text, txt2sum
+from anomalib.utils.llm import img2text, txt2sum, load_model
 ```
 
 ```{python}
 # test juice bottle
-path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini/juice_bottle/train/good/001.png"
+path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/original/splicing_connectors/test/logical_anomalies/002.png"
 
-query = "Describe this juice bottle's characteristics, is the bottle full? locations of label and is objects"
+query = "How many seperate connectors block are there? how many cables are there? is the cable broken or not? is the connector has the same size?"
 
 api = "/home/erjin/git/Logic_AD_LLM/keys/gpt.json"
 ```
 
 ```{python}
-path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec/cable/test/combined/007.png"
-img2text(path, api, query="describe this cable image")["choices"][0]["message"]["content"]
+img2text(path, api, query=query, temperature=0.7, top_p=0.05, img_size=None)
+```
+
+```{python}
+# testing LLaVA as text extractor
+
+model_vlm_pipeline = load_model("llava16", "image-to-text", device="cuda")
+```
+
+```{python}
+img2text(path, api, query="can you please describe this cable, is the cable flawless?", model=model_vlm_pipeline, model_name="llava16")
 ```
 
 ```{python}

@@ -154,6 +154,8 @@ def img2text(
             output = None
     else:
         output = llava_inference(model=model, prompt=query, path=image, max_new_tokens=max_tokens)
+        # only extract the answer
+        output = output.split("\nASSISTANT")[-1][2:]
 
     return output
 
@@ -188,7 +190,7 @@ def txt2embedding(
 
 def txt2txt(
     input_text="",
-    query="select the most frequent or probable sentence from the list, please only give the sentence",
+    query="select the most representative sentence, please only give the sentence",
     api_key=None,
     model="gpt-4o",
     system_message="You are an AI assistant that helps people find information.",

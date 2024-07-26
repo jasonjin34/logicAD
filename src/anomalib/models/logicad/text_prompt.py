@@ -10,7 +10,8 @@ TEXT_EXTRACTOR_PROMPTS = {
     "juice_bottle": "what is color of the juice? what is the fruit? color of juice should match with fruit (red, wine color for cherry, white for banana and yellow for orange), how much juice in the bottle? are there two sticker, one with 100% juice on the bottom and the other with the fruit label on the top and fruit is located in the middle of the label?",
     "pushpins": "is there any pushpins in the image?, yes or no",
     "screw_bag": "how many bolts, washers, and nuts? describe the length of the bolts using the longer bolt as reference (1/4, 1/2, 3/4, 1)",
-    "splicing_connectors": "Answer this question if the image contain only one connector: which slot is the cable connected to (top one is the first one)?. Answer these questions if the image contain more than one connector: How many connectors are there? how many cables are there? is the cable broken or not? is the connector has the same size?",
+    # "splicing_connectors": "Answer this question if the image contain only one connector: where is the vertical position of the cable (top middle or bottom)?. Answer these questions if the image contains seperate connector blocks: How many connectors are there? how many cables are there? is the cable broken or not? is the connector has the same size?",
+    "splicing_connectors": "How many seperate connectors block are there? how many cables are there? is the cable broken or not? is the connector has the same size?",
     # mvtec category
     "cable": "is there any flaw, abnormal, cut, untwisted or splayed out wird in the image, yes or no with short reason? do the inner insulation have completely color?",
     "pill": "is there any color other then sparse wine specks? do all specks have the same color? does the pill has crack or noticeable broken? is the pill has print FF flawlessly? pill is defect if one of the question is yes",
@@ -34,10 +35,10 @@ TEXT_EXTRACTOR_PROMPTS = {
 TEXT_SUMMATION_PROMPTS = {
     "breakfast_box": "number of objects",
     # "juice_bottle": "location of objects, and their characteristics",
-    "juice_bottle": "color matching: {yes, or no, if there is no sticker then no}, juice status: {how full is the bottle},  top sticker: {correct if the fruit match with juice}, bottom sticker: {correct if there is 100% juice states therer}",
+    "juice_bottle": "color matching: {yes, or no, if there is no sticker then no}, juice status: {how full is the bottle},  top sticker: {correct if the fruit match with juice}, bottom sticker: {correct if there is word 100% juice}",
     "pushpins": "pushpin: {yes or no}",
     "screw_bag": "number of objects, length of bolts",
-    "splicing_connectors": "connector: {nummber of connectors}, cable: {nummber of cables, broken or not?}, patchs: {is both cable connected to the same slot on each side}",
+    "splicing_connectors": "connector: {nummber of connectors, size}, cable: {nummber of cables, broken or not?}, patchs: {same_slot (answer it with yes or not)?}",
     # mvtec category
     "cable":  "defect: {yes or no, defect reason}, three unique color: {yes or no}",
     "pill":  "defect: {yes or no}, reason: {short reason}",

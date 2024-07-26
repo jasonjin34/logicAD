@@ -4,6 +4,7 @@ anomalib as general framework
 """
 from torch import nn
 import numpy as np
+import os
 from .utils import init_json, update_json 
 
 from .text_prompt import (
@@ -48,9 +49,10 @@ class LogicadModel(nn.Module):
         sliding_window: bool = False,
         croping_patch: bool = False,
         gdino_cfg: str= "swint",
-        device: str = "cuda:0",
+        device: str = "cuda:1",
         wo_summation: bool = False,
-        num_text_extraction: int = 5,
+        threshold: float = 0.14,
+        num_text_extraction: int = 1,
     ) -> None:
         super().__init__()
         self.api_key = api_key
@@ -62,6 +64,7 @@ class LogicadModel(nn.Module):
         self.temp = temp
         self.cropping_patch = croping_patch
         self.num_text_extraction = num_text_extraction
+        self.threshold = threshold
         self.seed = seed
         self.wo_summation= wo_summation
         self.model_vlm = model_vlm
@@ -72,12 +75,15 @@ class LogicadModel(nn.Module):
         self.reference_img_features = None
         self.reference_img_paths = None
         self.abnormal_ref_embedding = None
-        self.img2txt_db_path = img2txt_db
-        self.img2txt_db_dict: dict = init_json(img2txt_db)
 
         if model_vlm not in ["gpt-4o", "gpt-4o-turbo", "gpt-4o-az"]:
             self.model_vlm_pipeline = load_model(model_vlm, "image-to-text", device=device)
+            basename = model_vlm + "_" + os.path.basename(img2txt_db)
+            self.img2txt_db_path = os.path.join(os.path.dirname(img2txt_db), basename)
+            self.img2txt_db_dict: dict = init_json(self.img2txt_db_path)
         else:
+            self.img2txt_db_path = img2txt_db
+            self.img2txt_db_dict: dict = init_json(img2txt_db)
             self.model_vlm_pipeline = None
 
         # only activate groudingdino if we applying sliding window
@@ -132,13 +138,13 @@ class LogicadModel(nn.Module):
             )
 
             if self.cropping_patch:
-                patches = self.generate_crop_img(image_path)
+                patches, img = self.generate_crop_img(image_path)
                 for p in patches:
-                    text = text +  ". patch descriptions: " + \
+                    text = text +  " patch descriptions: " + \
                         img2text(
                             p, 
                             self.api_key, 
-                            query=prompt, 
+                            query="where is the vertical position of the cable (use top, middle or bottom of the connectors for description)?", 
                             model_name=self.model_vlm,
                             model=self.model_vlm_pipeline,
                             max_tokens=self.max_token,
@@ -147,25 +153,20 @@ class LogicadModel(nn.Module):
                             top_p=self.top_p,
                             seed=self.seed
                         )
-
-            if self.model_vlm == "llava16":
-                text = text.split("\nASSISTANT")[-1][2:] # llava model
             return text 
 
         prompt = TEXT_EXTRACTOR_PROMPTS[self.category]
         if image_path in self.img2txt_db_dict:
             text = self.img2txt_db_dict[image_path]
         else:
-            text_list = []
-
-            for _ in range(self.num_text_extraction):
-                text_list.append(text_retrival(image_path))
-            
-            print(text_list)
-
-            test_list_str = str(text_list)
-            text = txt2txt(test_list_str, api_key=self.api_key, model=self.model_llm).replace('"', '')
-
+            if self.num_text_extraction > 1:
+                text_list = []
+                for _ in range(self.num_text_extraction):
+                    text_list.append(text_retrival(image_path))
+                test_list_str = str(text_list)
+                text = txt2txt(test_list_str, api_key=self.api_key, model=self.model_llm).replace('"', '')
+            else:
+                text = text_retrival(image_path)
             self.img2txt_db_dict[image_path] = text
             update_json(self.img2txt_db_path, self.img2txt_db_dict)
         return text
@@ -213,6 +214,11 @@ class LogicadModel(nn.Module):
             for ref_img in self.reference_img_features:
                 score.append(calculate_centroidmap_disance(ref_img, x_centroid_points))
             score = np.array(score).mean()
+            if score > 1: # abnormal cases e.g. no object detected
+                score = 0
+            else:
+                if score < self.threshold:
+                    score = 0
         return score 
     
     def generate_crop_img(self, x):
@@ -224,8 +230,8 @@ class LogicadModel(nn.Module):
             text_threshold=0.35, 
             query=self.category
         )
-        patches = patch_extraction_from_box(img, boxes, patch=2)
-        return patches
+        patches = patch_extraction_from_box(img, boxes, patch=1.5)
+        return patches, img
     
     def generate_score(self, query):
         score = cos_sim(query, self.reference_embedding[0])
@@ -239,6 +245,7 @@ class LogicadModel(nn.Module):
             if self.sliding_window or self.cropping_patch:
                 geo_score = self.genenerate_img_features_score(x)
 
+            # ugly code to handle the nested list
             if isinstance(x, list):
                 x = x[0]
 
@@ -251,7 +258,7 @@ class LogicadModel(nn.Module):
                 score = 1 - cos_sim(embedding, self.reference_embedding)
             else:
                 score = 1 - cos_sim(embedding, self.reference_embedding[0])
-            print("anomalib score:", score)
+            print("anomalib score:", score, "geo score", geo_score)
             score = score + geo_score
             return score
         except:

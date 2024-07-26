@@ -1,6 +1,7 @@
 import torch
 from transformers import AutoProcessor, LlavaForConditionalGeneration
 from transformers import BitsAndBytesConfig
+from PIL import Image
 import requests
 from transformers import pipeline
 from PIL import Image
@@ -23,23 +24,22 @@ def load_model(model_id, task, device):
 
 
 def llava_inference(model, prompt, path, max_new_tokens=300):
-    with open(path, "rb") as f:
-        image = Image.open(f)
-        prompt = f"USER: <image>\n {prompt} \nASSISTANT:"
-        outputs = model(
-            image, prompt=prompt, generate_kwargs={"max_new_tokens": max_new_tokens})
-        text = outputs[0]["generated_text"]
-        return text
+    if isinstance(path, str):
+        image = Image.open(path)
+    else:
+        path = path.permute(1, 2, 0).detach().numpy()
+        image = Image.fromarray(path)
+
+    prompt = f"USER: <image>\n {prompt} \nASSISTANT:"
+    outputs = model(
+        image, prompt=prompt, generate_kwargs={"max_new_tokens": max_new_tokens})
+    text = outputs[0]["generated_text"]
+    return text
 
 
 def test_img2text_extraction():
     dir_path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/original/breakfast_box/test/logical_anomalies/" 
     path_list = glob.glob(os.path.join(dir_path, "*.png"))
-
-    # quantization_config = BitsAndBytesConfig(
-    #     load_in_4bit=True,
-    #     bnb_4bit_compute_dtype=torch.float16
-    # )
 
     pip = load_model(LLAVA_ID[0], "image-to-text", "cuda:1")
     prompt = "USER: <image>\n Can you please describe this image? Does the image contain scratches?\nASSISTANT:"
