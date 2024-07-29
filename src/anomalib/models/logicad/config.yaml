@@ -38,7 +38,7 @@ model:
   max_token: 500
   img_size: null 
   sliding_window: false # options: [true, false], divide conqour
-  croping_patch: true 
+  croping_patch: true
   gdino_cfg: swint
   k_shot: 1
   seed: 44

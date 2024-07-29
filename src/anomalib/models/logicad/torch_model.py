@@ -139,12 +139,13 @@ class LogicadModel(nn.Module):
 
             if self.cropping_patch:
                 patches, img = self.generate_crop_img(image_path)
-                for p in patches:
-                    text = text +  " patch descriptions: " + \
-                        img2text(
+                for p in patches[:2]:
+                    patch_text_list = []
+                    for _ in range(5):
+                        patch_text = img2text(
                             p, 
                             self.api_key, 
-                            query="where is the vertical position of the cable (use top, middle or bottom of the connectors for description)?", 
+                            query=prompt, 
                             model_name=self.model_vlm,
                             model=self.model_vlm_pipeline,
                             max_tokens=self.max_token,
@@ -153,6 +154,10 @@ class LogicadModel(nn.Module):
                             top_p=self.top_p,
                             seed=self.seed
                         )
+                        patch_text_list.append(patch_text)
+                    test_list_str = str(patch_text_list)
+                    text_path = txt2txt(test_list_str, api_key=self.api_key, model=self.model_llm).replace('"', '')
+                    text = text +  " patch descriptions: " + text_path
             return text 
 
         prompt = TEXT_EXTRACTOR_PROMPTS[self.category]
@@ -240,26 +245,23 @@ class LogicadModel(nn.Module):
         return output
 
     def forward(self, x):
-        try:
-            geo_score = 0
-            if self.sliding_window or self.cropping_patch:
-                geo_score = self.genenerate_img_features_score(x)
+        geo_score = 0
+        if self.sliding_window or self.cropping_patch:
+            geo_score = self.genenerate_img_features_score(x)
 
-            # ugly code to handle the nested list
-            if isinstance(x, list):
-                x = x[0]
+        # ugly code to handle the nested list
+        if isinstance(x, list):
+            x = x[0]
 
-            template = self.reference_summation[0]
-            text_summation = self.text_summation(x, template=template)
-            print(text_summation)
-            embedding = self.text_embedding(input_text=text_summation)
-            # calculate the similarity
-            if self.wo_summation:
-                score = 1 - cos_sim(embedding, self.reference_embedding)
-            else:
-                score = 1 - cos_sim(embedding, self.reference_embedding[0])
-            print("anomalib score:", score, "geo score", geo_score)
-            score = score + geo_score
-            return score
-        except:
-            pass
+        template = self.reference_summation[0]
+        text_summation = self.text_summation(x, template=template)
+        print(text_summation)
+        embedding = self.text_embedding(input_text=text_summation)
+        # calculate the similarity
+        if self.wo_summation:
+            score = 1 - cos_sim(embedding, self.reference_embedding)
+        else:
+            score = 1 - cos_sim(embedding, self.reference_embedding[0])
+        print("anomalib score:", score, "geo score", geo_score)
+        score = score + geo_score
+        return score

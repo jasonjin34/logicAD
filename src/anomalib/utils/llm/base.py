@@ -190,7 +190,7 @@ def txt2embedding(
 
 def txt2txt(
     input_text="",
-    query="select the most representative sentence, please only give the sentence",
+    query="select one of th sentence from the list with the most share feature, please only give the sentence",
     api_key=None,
     model="gpt-4o",
     system_message="You are an AI assistant that helps people find information.",
@@ -241,7 +241,7 @@ def txt2sum(
     few_shot_message="",
     api_key=None,
     model="gpt-4o",
-    system_message="You are a helpful assistant designed to output JSON.",
+    system_message= "You are an AI assistant that helps people find information and give me the output as JSON", #"You are a helpful assistant designed to output JSON.",
     seed=42,
     max_token=200,
     top_p=None,
