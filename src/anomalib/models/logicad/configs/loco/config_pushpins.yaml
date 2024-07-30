@@ -1,7 +1,7 @@
 dataset:
   name: mvtec_loco 
   format: mvtec_loco 
-  path: ./datasets/MVTec_Loco/mini
+  path: ./datasets/MVTec_Loco/original
   task: classification 
   category: pushpins
   train_batch_size: 1
@@ -34,10 +34,10 @@ model:
   img_size: ${dataset.image_size}
   model_llm: gpt-4o-az # options: [gpt-4o, gpt-4o-az]
   temp: 0.05
-  top_p: 0.1
+  top_p: 0.05
   model_embedding: text-embedding-3-large-az
-  croping_patch: false
-  sliding_window: true # options: [true, false], divide conqour
+  croping_patch: true 
+  sliding_window: false # options: [true, false], divide conqour
   gdino_cfg: swint
   k_shot: 1
   max_token: 500

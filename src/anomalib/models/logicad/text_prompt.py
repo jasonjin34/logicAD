@@ -8,7 +8,7 @@ TEXT_EXTRACTOR_PROMPTS = {
     "breakfast_box": "what is on the left side of image? and what is on the right side of image?",
     # "juice_bottle": "Describe this juice bottle's characteristics, is the bottle full? locations of label and is objects",
     "juice_bottle": "what is color of the juice? what is the fruit? color of juice should match with fruit (red, wine color for cherry, white for banana and yellow for orange), how much juice in the bottle? are there two sticker, one with 100% juice on the bottom and the other with the fruit label on the top and fruit is located in the middle of the label?",
-    "pushpins": "is there any pushpins in the image?, yes or no",
+    "pushpins": "how many pushpins are there? give the answer as the following format: {pushpins: number of pushpins}",
     "screw_bag": "how many bolts, washers, and nuts? describe the length of the bolts using the longer bolt as reference (1/4, 1/2, 3/4, 1)",
     "splicing_connectors": "Answer this question if the image contain only one block of connectors: where is the vertical position of the cable (use top, middle or bottom of the connectors for description)?. Answer these questions if the image contains seperate connector blocks: How many connectors are there? how many cables are there? is the cable broken or not? is the connector has the same size?",
     # mvtec category
@@ -35,9 +35,9 @@ TEXT_SUMMATION_PROMPTS = {
     "breakfast_box": "number of objects",
     # "juice_bottle": "location of objects, and their characteristics",
     "juice_bottle": "color matching: {yes, or no, if there is no sticker then no}, juice status: {how full is the bottle},  top sticker: {correct if the fruit match with juice}, bottom sticker: {correct if there is word 100% juice}",
-    "pushpins": "pushpin: {yes or no}",
+    "pushpins": "number of pushpin per patch: {[list of number of pushpins]}, same patches: {yes or no, no if two patches are different}",
     "screw_bag": "number of objects, length of bolts",
-    "splicing_connectors": "connector: {nummber of blocks, size}, cable: {nummber of cables, broken or not?}, patchs: {position: (if cable connected to the same connector position, then same, otherwise different)?}",
+    "splicing_connectors": "connector: {nummber of connectors bl, size}, cable: {nummber of cables, broken or not?}, patchs: {same position: (answer it with yes or not)?}",
     # mvtec category
     "cable":  "defect: {yes or no, defect reason}, three unique color: {yes or no}",
     "pill":  "defect: {yes or no}, reason: {short reason}",

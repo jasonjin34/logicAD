@@ -124,24 +124,25 @@ class LogicadModel(nn.Module):
         Extract text from the image
         """
         def text_retrival(image_path):
-            text = img2text(
-                image_path, 
-                self.api_key, 
-                query=prompt, 
-                model_name=self.model_vlm,
-                model=self.model_vlm_pipeline,
-                max_tokens=self.max_token,
-                img_size=self.img_size,
-                temperature=self.temp,
-                top_p=self.top_p,
-                seed=self.seed,
-            )
+            # text = img2text(
+            #     image_path, 
+            #     self.api_key, 
+            #     query=prompt, 
+            #     model_name=self.model_vlm,
+            #     model=self.model_vlm_pipeline,
+            #     max_tokens=self.max_token,
+            #     img_size=self.img_size,
+            #     temperature=self.temp,
+            #     top_p=self.top_p,
+            #     seed=self.seed,
+            # )
+            text = ""
 
             if self.cropping_patch:
                 patches, img = self.generate_crop_img(image_path)
-                for p in patches[:2]:
+                for p in patches:
                     patch_text_list = []
-                    for _ in range(5):
+                    for _ in range(1):
                         patch_text = img2text(
                             p, 
                             self.api_key, 
@@ -156,8 +157,12 @@ class LogicadModel(nn.Module):
                         )
                         patch_text_list.append(patch_text)
                     test_list_str = str(patch_text_list)
-                    text_path = txt2txt(test_list_str, api_key=self.api_key, model=self.model_llm).replace('"', '')
+                    summa_query = "select the most frequent text from the list, only give the unique text"
+                    text_path = txt2txt(test_list_str, query=summa_query, api_key=self.api_key, model=self.model_llm).replace('"', '')
                     text = text +  " patch descriptions: " + text_path
+                
+                summa_query = "select the unique texts from the list, only give the unique text"
+                text = txt2txt(text, query=summa_query, api_key=self.api_key, model=self.model_llm).replace('"', '') 
             return text 
 
         prompt = TEXT_EXTRACTOR_PROMPTS[self.category]
@@ -235,7 +240,7 @@ class LogicadModel(nn.Module):
             text_threshold=0.35, 
             query=self.category
         )
-        patches = patch_extraction_from_box(img, boxes, patch=1.5)
+        patches = patch_extraction_from_box(img, boxes, patch=1)
         return patches, img
     
     def generate_score(self, query):
@@ -246,7 +251,8 @@ class LogicadModel(nn.Module):
 
     def forward(self, x):
         geo_score = 0
-        if self.sliding_window or self.cropping_patch:
+        # if self.sliding_window or self.cropping_patch:
+        if self.sliding_window:
             geo_score = self.genenerate_img_features_score(x)
 
         # ugly code to handle the nested list

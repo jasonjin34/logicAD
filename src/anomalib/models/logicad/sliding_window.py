@@ -43,39 +43,64 @@ def patch_extraction_from_box(image, boxes, patch=1):
         h, w = image.shape[-2:]
         print(w, h)
 
-    if w > h:
-        patch = int(h // 3 * patch)
-    else:
-        patch = int(w // 3 * patch)
-
     output_image = []
-    for box in boxes:
-        # convert box to image dim
-        # box format, center w, center h
-        cw, ch = int(box[0] * w), int(box[1] * h)
-        sw = cw - patch // 2
-        ew = cw + patch // 2
-        sh = ch - patch // 2
-        eh = ch + patch // 2
-        try:
+    if patch == 1:
+        for box in boxes:
+            # convert box to image dim
+            # box format, center w, center h, width, height
+            # image format, [batch, height, width]
+            cw, ch = int(box[0] * w), int(box[1] * h)
+            bw, bh = int(box[2] * w) // 2, int(box[3] * h) // 2
+            sw = cw - bw
+            ew = cw + bw
+            sh = ch - bh
+            eh = ch + bh
             if sw <= 0:
                 sw = 0
             if sh <= 0:
                 sh = 0
             if ew >= w:
-                ew = -1
+                ew = w
             if eh >= h:
-                eh = -1
+                eh = h
+            try:
+                output_image.append(image[:, sh:eh, sw:ew])
+            except:
+                import pdb; pdb.set_trace()
+    else:
+        if w > h:
+            patch = int(h // 3 * patch)
+        else:
+            patch = int(w // 3 * patch)
 
-        except Exception as e:
-            import pdb; pdb.set_trace()
-        output_image.append(image[:, sh:eh, sw:ew])
+        for box in boxes:
+            # convert box to image dim
+            # box format, center w, center h
+            cw, ch = int(box[0] * w), int(box[1] * h)
+            sw = cw - patch // 2
+            ew = cw + patch // 2
+            sh = ch - patch // 2
+            eh = ch + patch // 2
+            try:
+                if sw <= 0:
+                    sw = 0
+                if sh <= 0:
+                    sh = 0
+                if ew >= w:
+                    ew = -1
+                if eh >= h:
+                    eh = -1
+
+            except Exception as e:
+                import pdb; pdb.set_trace()
+            output_image.append(image[:, sh:eh, sw:ew])
+        
     return output_image 
 
 
 QUERY_DICT = {
     "splicing_connectors": "connectors without cable",
-    "pushpins": "pushpin",
+    "pushpins": "black square",
     "juice_bottle": "fruit",
 }
     
@@ -89,8 +114,15 @@ def get_bbx_from_query(
     device="cuda"
 ):
     global QUERY_DICT
+    filter = False
+    if query == "pushpins":
+        box_threshold = 0.1
+        text_threshold = 0.1
+        filter = True
+
     if query in QUERY_DICT:
         query = QUERY_DICT[query]
+    
     boxes, logits, phrases = predict(
         model=model, 
         image=image, 
@@ -99,6 +131,14 @@ def get_bbx_from_query(
         text_threshold=text_threshold,
         device=device
     )
+    
+    if filter:
+        h = boxes[:, 2:3]
+        w = boxes[:, 3:]
+        size = h * w
+        condition = (size < 0.8) & (size > 0.02)
+        boxes = boxes[(torch.where(condition))[0]]
+
     return boxes, logits, phrases
 
 
