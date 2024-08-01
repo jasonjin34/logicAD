@@ -6,7 +6,6 @@
 TEXT_EXTRACTOR_PROMPTS = {
     # loco category
     "breakfast_box": "what is on the left side of image? and what is on the right side of image?",
-    # "juice_bottle": "Describe this juice bottle's characteristics, is the bottle full? locations of label and is objects",
     "juice_bottle": "what is color of the juice? what is the fruit? color of juice should match with fruit (red, wine color for cherry, white for banana and yellow for orange), how much juice in the bottle? are there two sticker, one with 100% juice on the bottom and the other with the fruit label on the top and fruit is located in the middle of the label?",
     "pushpins": "how many pushpins are there? give the answer as the following format: {pushpins: number of pushpins}",
     "screw_bag": "how many bolts, washers, and nuts? describe the length of the bolts using the longer bolt as reference (1/4, 1/2, 3/4, 1)",
@@ -33,7 +32,6 @@ TEXT_EXTRACTOR_PROMPTS = {
 
 TEXT_SUMMATION_PROMPTS = {
     "breakfast_box": "number of objects",
-    # "juice_bottle": "location of objects, and their characteristics",
     "juice_bottle": "color matching: {yes, or no, if there is no sticker then no}, juice status: {how full is the bottle},  top sticker: {correct if the fruit match with juice}, bottom sticker: {correct if there is word 100% juice}",
     "pushpins": "number of pushpin per patch: {[list of number of pushpins]}, same patches: {yes or no, no if two patches are different}",
     "screw_bag": "number of objects, length of bolts",
@@ -59,13 +57,18 @@ TEXT_SUMMATION_PROMPTS = {
 }
 
 
-PROMPT0 = (
-    "Given the description of an image, please output a formal specification as a set of (propositional) formulae. "
-)
+TEXT_EXTRACTOR_PROMPTS_SA = {
+    # loco category
+    "breakfast_box": "any abnormal object in the image which does not belong to breakfast box (only with fruit, granola, banana chip, almond ? any broken object (banana chip and almod can not be in very tiny pieces)? only give short answer",
+    "juice_bottle": "any object inside the bottle other than juice? is the juice color match with label (yellow for orange, white for banana, wine red for cherry? are all label intact? is the fruit picture correct (orange with one green leaf or two cherry or bananas)?",
+    "pushpins": "is the pushpin broken or damaged? if yes, give a short reason. is the compartment contain other object other than pushpin?",
+    "screw_bag": "how many bolts, washers, and nuts? describe the length of the bolts using the longer bolt as reference (1/4, 1/2, 3/4, 1)"
+}
 
-RULE = """Some syntactical rules are to be followed:\n
-1. Each line consists of only one piece of fact.\n
-2. Predicates are named in terms of properties such as location, color, size etc. Connect words with underline. Use lowercases only.\n
-3. Objects and quantities are given as arguments of the predicates (use * if the object is uncountable or the number is irrelevant). Connect words with underline and always use singular form\n
-4. Logical connectives such as $AND$, $OR$ $NOT$ might be used.
-5. Description and output should be given in form 'Text: (Description of the image)\nFormulae: (a set of logical formulae)'"""
+TEXT_SUMMATION_PROMPTS_SA = {
+    "breakfast_box": "abnormal object: {yes or no}, broken object: {yes or no}",
+    "juice_bottle": "abnormal object inside bottle: {yes or no}, juice color: {correct}, label: {intact or not}, fruit picture: {correct or not}",
+    "pushpins": "damage or broken: {yes or no}, reason: {short reason if no}, other object: {yes or no}",
+    "screw_bag": "number of objects, length of bolts",
+    "splicing_connectors": "connector: {nummber of connectors bl, size}, cable: {nummber of cables, broken or not?}, patchs: {same position: (answer it with yes or not)?}"
+}

@@ -10,6 +10,8 @@ from .utils import init_json, update_json
 from .text_prompt import (
     TEXT_EXTRACTOR_PROMPTS,
     TEXT_SUMMATION_PROMPTS,
+    TEXT_EXTRACTOR_PROMPTS_SA,
+    TEXT_SUMMATION_PROMPTS_SA,
 )
 
 from anomalib.utils.llm import (
@@ -53,6 +55,7 @@ class LogicadModel(nn.Module):
         wo_summation: bool = False,
         threshold: float = 0.14,
         num_text_extraction: int = 1,
+        sa: bool = False,
     ) -> None:
         super().__init__()
         self.api_key = api_key
@@ -75,6 +78,8 @@ class LogicadModel(nn.Module):
         self.reference_img_features = None
         self.reference_img_paths = None
         self.abnormal_ref_embedding = None
+        self.text_extractor_prompt = TEXT_EXTRACTOR_PROMPTS_SA if sa else TEXT_EXTRACTOR_PROMPTS
+        self.text_summation_prompt = TEXT_SUMMATION_PROMPTS_SA if sa else TEXT_SUMMATION_PROMPTS
 
         if model_vlm not in ["gpt-4o", "gpt-4o-turbo", "gpt-4o-az"]:
             self.model_vlm_pipeline = load_model(model_vlm, "image-to-text", device=device)
@@ -86,8 +91,6 @@ class LogicadModel(nn.Module):
             self.img2txt_db_dict: dict = init_json(img2txt_db)
             self.model_vlm_pipeline = None
 
-        # only activate groudingdino if we applying sliding window
-        # self.gdino_model = load_gdino_model(cfg=gdino_cfg) if sliding_window else None
         self.gdino_model = load_gdino_model(cfg=gdino_cfg)
     
     def init_reference(
@@ -124,21 +127,8 @@ class LogicadModel(nn.Module):
         Extract text from the image
         """
         def text_retrival(image_path):
-            # text = img2text(
-            #     image_path, 
-            #     self.api_key, 
-            #     query=prompt, 
-            #     model_name=self.model_vlm,
-            #     model=self.model_vlm_pipeline,
-            #     max_tokens=self.max_token,
-            #     img_size=self.img_size,
-            #     temperature=self.temp,
-            #     top_p=self.top_p,
-            #     seed=self.seed,
-            # )
-            text = ""
-
             if self.cropping_patch:
+                text = ""
                 patches, img = self.generate_crop_img(image_path)
                 for p in patches:
                     patch_text_list = []
@@ -163,9 +153,22 @@ class LogicadModel(nn.Module):
                 
                 summa_query = "select the unique texts from the list, only give the unique text"
                 text = txt2txt(text, query=summa_query, api_key=self.api_key, model=self.model_llm).replace('"', '') 
+            else:
+                text = img2text(
+                    image_path, 
+                    self.api_key, 
+                    query=prompt, 
+                    model_name=self.model_vlm,
+                    model=self.model_vlm_pipeline,
+                    max_tokens=self.max_token,
+                    img_size=self.img_size,
+                    temperature=self.temp,
+                    top_p=self.top_p,
+                    seed=self.seed,
+                )
             return text 
 
-        prompt = TEXT_EXTRACTOR_PROMPTS[self.category]
+        prompt = self.text_extractor_prompt[self.category]
         if image_path in self.img2txt_db_dict:
             text = self.img2txt_db_dict[image_path]
         else:
@@ -186,7 +189,7 @@ class LogicadModel(nn.Module):
         Summarize the text
         """  
         if template == "":
-            template = TEXT_SUMMATION_PROMPTS[self.category]
+            template = self.text_summation_prompt[self.category]
         
         text = self.text_extraction(image_path)
         
@@ -218,6 +221,7 @@ class LogicadModel(nn.Module):
         return embedding
     
     def genenerate_img_features_score(self, x):
+        # TODO clean this part
         if self.category in ["pushpins", "splicing_connectors", "juice_bottle"]:
             x_centroid_points = self.generate_centroid_points(x)
             score = []
@@ -251,7 +255,6 @@ class LogicadModel(nn.Module):
 
     def forward(self, x):
         geo_score = 0
-        # if self.sliding_window or self.cropping_patch:
         if self.sliding_window:
             geo_score = self.genenerate_img_features_score(x)
 

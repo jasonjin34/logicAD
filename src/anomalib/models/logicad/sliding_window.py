@@ -102,6 +102,7 @@ QUERY_DICT = {
     "splicing_connectors": "connectors without cable",
     "pushpins": "black square",
     "juice_bottle": "fruit",
+    "breakfast_box": "fruit, ganola, banana chip with nuts",
 }
     
 
@@ -118,7 +119,12 @@ def get_bbx_from_query(
     if query == "pushpins":
         box_threshold = 0.1
         text_threshold = 0.1
+        size_threshold = 0.02
         filter = True
+    elif query == "breakfast_box":
+        box_threshold = 0.2
+        text_threshold = 0.2
+        size_threshold = 0.1
 
     if query in QUERY_DICT:
         query = QUERY_DICT[query]
@@ -136,7 +142,7 @@ def get_bbx_from_query(
         h = boxes[:, 2:3]
         w = boxes[:, 3:]
         size = h * w
-        condition = (size < 0.8) & (size > 0.02)
+        condition = (size < 0.8) & (size > size_threshold)
         boxes = boxes[(torch.where(condition))[0]]
 
     return boxes, logits, phrases

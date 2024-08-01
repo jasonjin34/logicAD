@@ -37,6 +37,7 @@ class Logicad(AnomalyModule):
         gdino_cfg: str= "swint",
         seed: int = 42,
         k_shot: int = 1,
+        sa: bool = False,
     ) -> None:
         super().__init__()
         self.model: LogicadModel = LogicadModel(
@@ -52,7 +53,8 @@ class Logicad(AnomalyModule):
             seed = seed,
             model_embedding=model_embedding,
             sliding_window=sliding_window,
-            croping_patch=croping_patch
+            croping_patch=croping_patch,
+            sa=sa,
         )
         self.gdino_cfg = gdino_cfg
         self.sliding_window = sliding_window
@@ -137,6 +139,7 @@ class LogicadLightning(Logicad):
             sliding_window=hparams.model.sliding_window,
             croping_patch=hparams.model.croping_patch,
             gdino_cfg=hparams.model.gdino_cfg,
+            sa=hparams.model.sa,
         )
         self.hparams: DictConfig | ListConfig  # type: ignore
         self.save_hyperparameters(hparams)
