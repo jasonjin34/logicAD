@@ -8,7 +8,8 @@ TEXT_EXTRACTOR_PROMPTS = {
     "breakfast_box": "what is on the left side of image? and what is on the right side of image?",
     "juice_bottle": "what is color of the juice? what is the fruit? color of juice should match with fruit (red, wine color for cherry, white for banana and yellow for orange), how much juice in the bottle? are there two sticker, one with 100% juice on the bottom and the other with the fruit label on the top and fruit is located in the middle of the label?",
     "pushpins": "how many pushpins are there? give the answer as the following format: {pushpins: number of pushpins}",
-    "screw_bag": "how many bolts, washers, and nuts? describe the length of the bolts using the longer bolt as reference (1/4, 1/2, 3/4, 1)",
+    # "screw_bag": "Answer this question if there is only one object: is this washer or nut (only give the short answer)? Answer these questions if there is multiple objects: how many bolts are there? describe the length of the shorter bolts including head using the longer bolt as reference (only possible with 1/4, 1/2, 3/4, 1 of the longer bolt)",
+    "screw_bag": "Answer this question if there is only one object: is this washer or nut (only give the short answer)? Answer these questions if there is multiple objects: how many bolts are there? describe the length of the shorter bolts including head using the longer bolt as reference (only possible with 1/5, 2/5, 3/5, 4/5, 1 of the longer bolt) is the shorter bolt longer than 1.5 times the diameter of washer? {shorter bolt length: , longer bolt length: , number of bolts: , longer than 1.5 washer, yes or no}",
     "splicing_connectors": "Answer this question if the image contain only one block of connectors: where is the vertical position of the cable (use top, middle or bottom of the connectors for description)?. Answer these questions if the image contains seperate connector blocks: How many connectors are there? how many cables are there? is the cable broken or not? is the connector has the same size?",
     # mvtec category
     "cable": "is there any flaw, abnormal, cut, untwisted or splayed out wird in the image, yes or no with short reason? do the inner insulation have completely color?",
@@ -34,8 +35,9 @@ TEXT_SUMMATION_PROMPTS = {
     "breakfast_box": "number of objects",
     "juice_bottle": "color matching: {yes, or no, if there is no sticker then no}, juice status: {how full is the bottle},  top sticker: {correct if the fruit match with juice}, bottom sticker: {correct if there is word 100% juice}",
     "pushpins": "number of pushpin per patch: {[list of number of pushpins]}, same patches: {yes or no, no if two patches are different}",
-    "screw_bag": "number of objects, length of bolts",
-    "splicing_connectors": "connector: {nummber of connectors bl, size}, cable: {nummber of cables, broken or not?}, patchs: {same position: (answer it with yes or not)?}",
+    # "screw_bag": "length of bolts, patch_description:{num washer patch, num nut patch, num of bot}",
+    "screw_bag": "patch_descriptions:{num washer patch, num nut patch, num of bot, short bolt length (use the float number), long enough bolts: yes or no}",
+    "splicing_connectors": "connector: {nummber of connector blocks, same size or no}, cable: {nummber of cables, broken or not?}, patchs: {same position: (answer it with yes or not)?}",
     # mvtec category
     "cable":  "defect: {yes or no, defect reason}, three unique color: {yes or no}",
     "pill":  "defect: {yes or no}, reason: {short reason}",
@@ -61,14 +63,11 @@ TEXT_EXTRACTOR_PROMPTS_SA = {
     # loco category
     "breakfast_box": "any abnormal object in the image which does not belong to breakfast box (only with fruit, granola, banana chip, almond ? any broken object (banana chip and almod can not be in very tiny pieces)? only give short answer",
     "juice_bottle": "any object inside the bottle other than juice? is the juice color match with label (yellow for orange, white for banana, wine red for cherry? are all label intact? is the fruit picture correct (orange with one green leaf or two cherry or bananas)?",
-    "pushpins": "is the pushpin broken or damaged? if yes, give a short reason. is the compartment contain other object other than pushpin?",
-    "screw_bag": "how many bolts, washers, and nuts? describe the length of the bolts using the longer bolt as reference (1/4, 1/2, 3/4, 1)"
+    "pushpins": "pushpin is damaged if it is the pushpin largely bent and the yellow plastic sections do not have two circle? is the pushpin contaminated? is the compartment contain other object other than yellow pushpin? give the answer as the following format: {damage: yes or no, contanminated: yes or no,  other object: yes or no}",
 }
 
 TEXT_SUMMATION_PROMPTS_SA = {
     "breakfast_box": "abnormal object: {yes or no}, broken object: {yes or no}",
     "juice_bottle": "abnormal object inside bottle: {yes or no}, juice color: {correct}, label: {intact or not}, fruit picture: {correct or not}",
-    "pushpins": "damage or broken: {yes or no}, reason: {short reason if no}, other object: {yes or no}",
-    "screw_bag": "number of objects, length of bolts",
-    "splicing_connectors": "connector: {nummber of connectors bl, size}, cable: {nummber of cables, broken or not?}, patchs: {same position: (answer it with yes or not)?}"
+    "pushpins": " status of pushpin per patch: {[list of all status]}, same patches: {yes or no, no if two patches are different}",
 }

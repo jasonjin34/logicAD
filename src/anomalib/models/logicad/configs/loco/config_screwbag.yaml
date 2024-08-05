@@ -1,7 +1,7 @@
 dataset:
   name: mvtec_loco 
   format: mvtec_loco 
-  path: ./datasets/MVTec_Loco/mini
+  path: ./datasets/MVTec_Loco/original
   task: classification 
   category: screw_bag
   train_batch_size: 1
@@ -30,19 +30,20 @@ model:
   category: ${dataset.category}
   img2txt_db: ./datasets/${dataset.category}/img2text.json
   key_path: ./keys/gpt.json
-  model_vlm: llava16  # options: [gpt-4o, llava16, gpt-4o-az]
+  model_vlm: gpt-4o-az # options: [gpt-4o, llava16, gpt-4o-az]
   model_llm: gpt-4o-az # options: [gpt-4o, gpt-4o-az]
   temp: 0
-  top_p: 0.1
+  top_p: 0.05
   model_embedding: text-embedding-3-large-az
   sliding_window: false # options: [true, false], divide conqour
-  croping_patch: false
-  img_size: ${dataset.image_size}
+  croping_patch: true 
+  img_size: null
   gdino_cfg: swint
   k_shot: 1
   normalization_method: min_max # options: [null, min_max, cdf]
   seed: None
   max_token: 500
+  sa: false
 
 metrics:
   image:

@@ -126,13 +126,14 @@ class LogicadModel(nn.Module):
         """
         Extract text from the image
         """
-        def text_retrival(image_path):
+        def text_retrival(image_path, prompt):
             if self.cropping_patch:
                 text = ""
                 patches, img = self.generate_crop_img(image_path)
+                print("number of patches", len(patches))
                 for p in patches:
                     patch_text_list = []
-                    for _ in range(1):
+                    for _ in range(5):
                         patch_text = img2text(
                             p, 
                             self.api_key, 
@@ -147,13 +148,18 @@ class LogicadModel(nn.Module):
                         )
                         patch_text_list.append(patch_text)
                     test_list_str = str(patch_text_list)
-                    summa_query = "select the most frequent text from the list, only give the unique text"
+                    summa_query = "select the most frequent text from the list, only give the text"
                     text_path = txt2txt(test_list_str, query=summa_query, api_key=self.api_key, model=self.model_llm).replace('"', '')
-                    text = text +  " patch descriptions: " + text_path
-                
-                summa_query = "select the unique texts from the list, only give the unique text"
-                text = txt2txt(text, query=summa_query, api_key=self.api_key, model=self.model_llm).replace('"', '') 
+                    text = text +  " patch description: " + text_path + "."
+                if self.category != "screw_bag":
+                    summa_query = "select the unique text from the list, only give the unique text"
+                    text = txt2txt(text, query=summa_query, api_key=self.api_key, model=self.model_llm).replace('"', '') 
+                print(text)
             else:
+                # if self.category == "screw_bag":
+                #     patches, _ = self.generate_crop_img(image_path)
+                #     num_guide = f"Given total number of washer and nut is {len(patches)}l "
+                #     prompt = num_guide + prompt
                 text = img2text(
                     image_path, 
                     self.api_key, 
@@ -175,11 +181,13 @@ class LogicadModel(nn.Module):
             if self.num_text_extraction > 1:
                 text_list = []
                 for _ in range(self.num_text_extraction):
-                    text_list.append(text_retrival(image_path))
+                    text_list.append(text_retrival(image_path, prompt))
+                print(text_list)
                 test_list_str = str(text_list)
-                text = txt2txt(test_list_str, api_key=self.api_key, model=self.model_llm).replace('"', '')
+                query = "select the most frequently and probably text from the list, only give the text"
+                text = txt2txt(test_list_str, api_key=self.api_key, model=self.model_llm, query=query).replace('"', '')
             else:
-                text = text_retrival(image_path)
+                text = text_retrival(image_path, prompt)
             self.img2txt_db_dict[image_path] = text
             update_json(self.img2txt_db_path, self.img2txt_db_dict)
         return text

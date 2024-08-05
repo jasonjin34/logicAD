@@ -103,6 +103,7 @@ QUERY_DICT = {
     "pushpins": "black square",
     "juice_bottle": "fruit",
     "breakfast_box": "fruit, ganola, banana chip with nuts",
+    "screw_bag": "metal circle",
 }
     
 
@@ -125,6 +126,11 @@ def get_bbx_from_query(
         box_threshold = 0.2
         text_threshold = 0.2
         size_threshold = 0.1
+        filter = True
+    elif query == "screw_bag":
+        box_threshold = 0.2
+        text_threshold = 0.3
+        filter = True
 
     if query in QUERY_DICT:
         query = QUERY_DICT[query]
@@ -137,13 +143,18 @@ def get_bbx_from_query(
         text_threshold=text_threshold,
         device=device
     )
-    
     if filter:
         h = boxes[:, 2:3]
         w = boxes[:, 3:]
         size = h * w
-        condition = (size < 0.8) & (size > size_threshold)
-        boxes = boxes[(torch.where(condition))[0]]
+        if query == "metal circle":
+            condition = (size > 0.007) & (size < 0.01)
+            filter_boxes = boxes[(torch.where(condition))[0]]
+            overall = torch.tensor([[0.5, 0.5, 1.0, 1.0]])
+            boxes = torch.cat([filter_boxes, overall], dim=0)
+        else:
+            condition = (size < 0.8) & (size > size_threshold)
+            boxes = boxes[(torch.where(condition))[0]]
 
     return boxes, logits, phrases
 
