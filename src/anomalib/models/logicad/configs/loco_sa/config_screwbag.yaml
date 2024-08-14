@@ -28,21 +28,22 @@ dataset:
 model:
   name: logicad
   category: ${dataset.category}
-  img2txt_db: ./datasets/${dataset.category}/img2text.json
+  img2txt_db: ${dataset.path}/${dataset.category}/img2text.json
   key_path: ./keys/gpt.json
-  model_vlm: llava16  # options: [gpt-4o, llava16, gpt-4o-az]
+  model_vlm: gpt-4o-az # options: [gpt-4o, llava16, gpt-4o-az]
   model_llm: gpt-4o-az # options: [gpt-4o, gpt-4o-az]
-  temp: 0
-  top_p: 0.1
+  temp: 0.7
+  top_p: 0.95
   model_embedding: text-embedding-3-large-az
   sliding_window: false # options: [true, false], divide conqour
   croping_patch: false
-  img_size: ${dataset.image_size}
+  img_size: null
   gdino_cfg: swint
   k_shot: 1
   normalization_method: min_max # options: [null, min_max, cdf]
   seed: None
   max_token: 500
+  sa: true
 
 metrics:
   image:

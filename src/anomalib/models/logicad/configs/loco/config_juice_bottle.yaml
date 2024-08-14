@@ -30,19 +30,20 @@ model:
   category: ${dataset.category}
   img2txt_db: ./datasets/${dataset.category}/img2text.json
   key_path: ./keys/gpt.json
-  model_vlm: llava16 # gpt-4o-az # options: [gpt-4o, llava16, gpt-4o-az]
+  model_vlm: gpt-4o-az # gpt-4o-az # options: [gpt-4o, llava16, gpt-4o-az]
   model_llm: gpt-4o-az # options: [gpt-4o, gpt-4o-az]
   model_embedding: text-embedding-3-large-az # options: [text-embedding-3-large, text-embedding-3-large-az]
   temp: 0.05
   top_p: 0.1 
-  max_token: 500
-  img_size: ${dataset.image_size}
+  max_token: 800
+  img_size: null
   sliding_window: false # options: [true, false], divide conqour
-  croping_patch: true 
+  croping_patch: false
   gdino_cfg: swint
   k_shot: 1
   seed: 44
   normalization_method: min_max # options: [null, min_max, cdf]
+  sa: false
 
 metrics:
   image:

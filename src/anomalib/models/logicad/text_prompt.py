@@ -6,10 +6,9 @@
 TEXT_EXTRACTOR_PROMPTS = {
     # loco category
     "breakfast_box": "what is on the left side of image? and what is on the right side of image?",
-    "juice_bottle": "what is color of the juice? what is the fruit? color of juice should match with fruit (red, wine color for cherry, white for banana and yellow for orange), how much juice in the bottle? are there two sticker, one with 100% juice on the bottom and the other with the fruit label on the top and fruit is located in the middle of the label?",
+    "juice_bottle": "what is color of the juice? what is the fruit? color of juice should match with fruit (red, wine color for cherry, white for banana and yellow for orange), is the juice filled to around half of the neck in the bottle (only use following word, around half the neck, full(for more than half the neck), largely empty, empty)? are there two sticker?, is the top sticker correct (square sticker with fruit, fruit match with juice, fruit is located in the middle of the label)? is the bottom sticker correct (100% juice, located in the bottom of the bottle, horizontlly centred)? is the bottle with stickers symmetrically?",
     "pushpins": "how many pushpins are there? give the answer as the following format: {pushpins: number of pushpins}",
-    # "screw_bag": "Answer this question if there is only one object: is this washer or nut (only give the short answer)? Answer these questions if there is multiple objects: how many bolts are there? describe the length of the shorter bolts including head using the longer bolt as reference (only possible with 1/4, 1/2, 3/4, 1 of the longer bolt)",
-    "screw_bag": "Answer this question if there is only one object: is this washer or nut (only give the short answer)? Answer these questions if there is multiple objects: how many bolts are there? describe the length of the shorter bolts including head using the longer bolt as reference (only possible with 1/5, 2/5, 3/5, 4/5, 1 of the longer bolt) is the shorter bolt longer than 1.5 times the diameter of washer? {shorter bolt length: , longer bolt length: , number of bolts: , longer than 1.5 washer, yes or no}",
+    "screw_bag": "Answer this question if there is only one object: is this washer or nut (only give the short answer)? Answer these questions if there is multiple objects: how many bolts are there? describe the length of the shorter bolts including head using the longer bolt as reference (only possible with 1/5, 2/5, 3/5, 4/5, 1 of the longer bolt) all all bolts longer than 3 times the diameter of washer? {shorter bolt length: , longer bolt length: , number of bolts: , longer than 3 washer, yes or no}",
     "splicing_connectors": "Answer this question if the image contain only one block of connectors: where is the vertical position of the cable (use top, middle or bottom of the connectors for description)?. Answer these questions if the image contains seperate connector blocks: How many connectors are there? how many cables are there? is the cable broken or not? is the connector has the same size?",
     # mvtec category
     "cable": "is there any flaw, abnormal, cut, untwisted or splayed out wird in the image, yes or no with short reason? do the inner insulation have completely color?",
@@ -27,15 +26,12 @@ TEXT_EXTRACTOR_PROMPTS = {
     "leather": "is the leather flawless? (water mark is also consider as defect or flaw)",
     "tile": "is the tile flawless or not? (only crack, scratch, color stain, roughness surface, liquid stain or piece of glue tape , grey stain, are consider as defect or flaw)",
     "grid": "is the grid flawless or not? (only water mark, scratch, bent, broken and additional object are consider as defect or flaw)",
-    # visa category
-    "candle": "is the candle flawless?",
 }
 
 TEXT_SUMMATION_PROMPTS = {
     "breakfast_box": "number of objects",
-    "juice_bottle": "color matching: {yes, or no, if there is no sticker then no}, juice status: {how full is the bottle},  top sticker: {correct if the fruit match with juice}, bottom sticker: {correct if there is word 100% juice}",
+    "juice_bottle": "color matching: {yes, or no, if there is no sticker then no}, juice status: {full, half the neck, less than half of neck, empty or largely empty},  top sticker: {correct if the fruit match with juice and position is correct, if not exits, then incorrect}, bottom sticker: {correct if there is word 100% juice, located in the bottom of the bottle, if not exists, then incorrect), symmetrical: {yes or no}, number of stickers: {number of stickers}",
     "pushpins": "number of pushpin per patch: {[list of number of pushpins]}, same patches: {yes or no, no if two patches are different}",
-    # "screw_bag": "length of bolts, patch_description:{num washer patch, num nut patch, num of bot}",
     "screw_bag": "patch_descriptions:{num washer patch, num nut patch, num of bot, short bolt length (use the float number), long enough bolts: yes or no}",
     "splicing_connectors": "connector: {nummber of connector blocks, same size or no}, cable: {nummber of cables, broken or not?}, patchs: {same position: (answer it with yes or not)?}",
     # mvtec category
@@ -54,20 +50,22 @@ TEXT_SUMMATION_PROMPTS = {
     "leather": "defect: {yes or no}, reason: {short reason}",
     "tile": "defect: {yes or no}, reason: {short reason}",
     "grid": "defect: {yes or no}, reason: {short reason}",
-    # visa category
-    "candle": "defect: {yes or no}, reason: {short reason}",
 }
 
 
 TEXT_EXTRACTOR_PROMPTS_SA = {
     # loco category
-    "breakfast_box": "any abnormal object in the image which does not belong to breakfast box (only with fruit, granola, banana chip, almond ? any broken object (banana chip and almod can not be in very tiny pieces)? only give short answer",
-    "juice_bottle": "any object inside the bottle other than juice? is the juice color match with label (yellow for orange, white for banana, wine red for cherry? are all label intact? is the fruit picture correct (orange with one green leaf or two cherry or bananas)?",
-    "pushpins": "pushpin is damaged if it is the pushpin largely bent and the yellow plastic sections do not have two circle? is the pushpin contaminated? is the compartment contain other object other than yellow pushpin? give the answer as the following format: {damage: yes or no, contanminated: yes or no,  other object: yes or no}",
+    "breakfast_box": "any broken the fruits? Are there any broken objects (banana chips and almonds can not be in small pieces)? does more than half of the right compartment contain granola? Any abnormal objects (water, metal, anything does not belong to breakfast are all abnormal)? is the breakfast box flawless (ignore the bottom section)? answer all question with short answer (yes or no, with short reason)",
+    "juice_bottle": "Is there any object inside the bottle other than juice? Does the juice colour match the label (yellow for orange, white for banana, wine red for cherry? Are all labels intact? is the fruit picture correct (orange with one green leaf or two cherry or bananas)?",
+    "pushpins": "is metal pin shorter than yellow plastic section? is the pushpin damaged if one the following conditions is reached (the yellow plastic section does not have Two Circular End, broken yellow plastic section, largely curved metal pin, unsharp head, pin too short)? is the pushpin contaminated? is the compartment contain other object other than yellow pushpin? give the answer as the following format: {damage: yes or no, contanminated: yes or no,  other object: yes or no}",
+    "screw_bag": "is the plastic bag intact? are all bolts flawless? are nut flawless? are all washers flawless?, any abnormal object in the image other than bolts, nuts and washers (nuts and washer should have similar size, if not, then it is abnormal object)? answer all question with short answer (yes or no, with short reason)",
+    "splicing_connectors": "Answer these questions if the image contain only one block of connectors: are the transparent plastic side of the connector block facing upward? are all levers push down?. Answer these questions if the image contains seperate connector blocks: is the cable intact? is the cable color correct (it can only be red, blue, or yellow without any large black stain)? are both ends of the cable connected to the slots in the connectors? any abnormal cable?",
 }
 
 TEXT_SUMMATION_PROMPTS_SA = {
-    "breakfast_box": "abnormal object: {yes or no}, broken object: {yes or no}",
+    "breakfast_box": "fruits: {flawless or not}, broken pieces of nut and banana: {yes or no}, granola: {yes or no}, abnormal objects: {yes or no}, plastic box: {flawless or not}",
     "juice_bottle": "abnormal object inside bottle: {yes or no}, juice color: {correct}, label: {intact or not}, fruit picture: {correct or not}",
-    "pushpins": " status of pushpin per patch: {[list of all status]}, same patches: {yes or no, no if two patches are different}",
+    "pushpins": " pushpin status:{damaged: {yes or no}, contaminated: {yes or no}}, same patches: {yes or no, no if two patches are different}",
+    "screw_bag": "state: {plastic bag: {intact or not}, bolt: {flawless or not}, nut: {flawless or not}, washer: {flawless or not}, abnormals_object: {yes or no}",
+    "splicing_connectors": "connector: {plastic: (upward or not}, lever: {down or not}}, cable intact: {yes or no}, cable color: {correct or not}, connected: {yes or no}, abnomral cable: {yes or no}",
 }

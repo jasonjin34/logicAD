@@ -143,6 +143,11 @@ def get_bbx_from_query(
         text_threshold=text_threshold,
         device=device
     )
+
+    if query == "connectors without cable":
+        overall = torch.tensor([[0.5, 0.5, 1.0, 1.0]])
+        boxes = torch.cat([boxes, overall], dim=0)
+
     if filter:
         h = boxes[:, 2:3]
         w = boxes[:, 3:]

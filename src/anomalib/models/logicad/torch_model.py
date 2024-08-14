@@ -51,7 +51,7 @@ class LogicadModel(nn.Module):
         sliding_window: bool = False,
         croping_patch: bool = False,
         gdino_cfg: str= "swint",
-        device: str = "cuda:1",
+        device: str = "cuda:0",
         wo_summation: bool = False,
         threshold: float = 0.14,
         num_text_extraction: int = 1,
@@ -133,7 +133,7 @@ class LogicadModel(nn.Module):
                 print("number of patches", len(patches))
                 for p in patches:
                     patch_text_list = []
-                    for _ in range(5):
+                    for _ in range(1):
                         patch_text = img2text(
                             p, 
                             self.api_key, 
@@ -150,8 +150,8 @@ class LogicadModel(nn.Module):
                     test_list_str = str(patch_text_list)
                     summa_query = "select the most frequent text from the list, only give the text"
                     text_path = txt2txt(test_list_str, query=summa_query, api_key=self.api_key, model=self.model_llm).replace('"', '')
-                    text = text +  " patch description: " + text_path + "."
-                if self.category != "screw_bag":
+                    text = text +  " patch description: " + text_path + "\n"
+                if self.category not in ["screw_bag", "splicing_connectors"]:
                     summa_query = "select the unique text from the list, only give the unique text"
                     text = txt2txt(text, query=summa_query, api_key=self.api_key, model=self.model_llm).replace('"', '') 
                 print(text)
@@ -279,6 +279,5 @@ class LogicadModel(nn.Module):
             score = 1 - cos_sim(embedding, self.reference_embedding)
         else:
             score = 1 - cos_sim(embedding, self.reference_embedding[0])
-        print("anomalib score:", score, "geo score", geo_score)
-        score = score + geo_score
+        print("anomalib score:", score)
         return score
