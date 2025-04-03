@@ -51,7 +51,7 @@ _Below is an example of how you can install all the relevant packages_
     yes | conda create -n logic python=3.10
 	pip install torchvision==0.12.0+cu113 torch==1.11.0+cu113 -i https://download.pytorch.org/whl/cu113
     pip install -e .
-    pip install requirements.txt
+    pip install -r requirements.txt
    ```
 # Source Packages
 
