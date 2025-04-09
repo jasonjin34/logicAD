@@ -1,12 +1,11 @@
-{
-    "gpt": "sk-proj-6kgMSjEo5W6Ee20tLljFT3BlbkFJREu8BDxC2HHHJSIYSa1J",
-    "gpt-az": {
-        "key": "4db080b692b34bf58ec65342e94789d9",
-        "endpoint": "https://gpt-dbis.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview",
-        "azure_endpoint": "https://gpt-dbis.openai.azure.com/",
-        "embedding": "text-embedding-3-large",
-        "gpt-4o": "gpt-4o",
-        "api_version": "2024-06-01"
-    }
-
+{ 
+    "gpt": "sk-proj-6kgMSjEo5W6Ee20tLljFT3BlbkFJREu8BDxC2HHHJSIYSa1J", 
+    "gpt-az": { 
+        "key": "6p6TapxsDdfU3LdcAMqyy9ZUp56MhVC0KtTYXtF2SLRu1VMmU0mGJQQJ99AJACfhMk5XJ3w3AAABACOGZv2c", 
+        "endpoint": "https://gpt-dbis.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-02-15-preview", 
+        "azure_endpoint": "https://gpt-dbis.openai.azure.com/", 
+        "embedding": "text-embedding-3-large", 
+        "gpt-4o": "gpt-4o", 
+        "api_version": "2024-06-01" 
+    } 
 }

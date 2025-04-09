@@ -28,6 +28,8 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from typing import Sequence
+import pandas as pd
+
 
 import albumentations as A
 from pandas import DataFrame
@@ -146,11 +148,40 @@ def make_mvtec_dataset(
     mask_samples = samples.loc[samples.split == "ground_truth"].sort_values(by="image_path", ignore_index=True)
     samples = samples[samples.split != "ground_truth"].sort_values(by="image_path", ignore_index=True)
 
+    #debug
+    abnormal_samples = samples.loc[(samples.split == "test") & (samples.label_index == LabelName.ABNORMAL)]
+
+    print(f"Num of abnormal test images: {len(abnormal_samples)}")
+
+    mask_paths = [
+       str(root / "ground_truth" / sample.label / f"{sample.image_path}.png")
+        for sample in abnormal_samples.itertuples()
+    ]
+
+    print(f"Num of mask paths to assign: {len(mask_paths)}")
+
+    abnormal_mask = (samples.split == "test") & (samples.label_index == LabelName.ABNORMAL)
+    abnormal_count = abnormal_mask.sum()
+
+    print("Num of test ABNORMAL samples:", abnormal_count)
+    print("Num of mask_paths:", len(mask_paths))
+
+
     # assign mask paths to anomalous test images
     samples["mask_path"] = ""
-    samples.loc[(samples.split == "test") & (samples.label_index == LabelName.ABNORMAL), "mask_path"] = (
+    """ samples.loc[(samples.split == "test") & (samples.label_index == LabelName.ABNORMAL), "mask_path"] = (
         mask_samples.image_path.values
-    )
+    ) """
+    
+    #debug
+    abnormal_mask = (samples.split == "test") & (samples.label_index == LabelName.ABNORMAL)
+    abnormal_indices = samples[abnormal_mask].index
+
+    if len(abnormal_indices) != len(mask_paths):
+        raise RuntimeError(f"Index-Mask length mismatch: {len(abnormal_indices)} vs {len(mask_paths)}")
+
+    samples.loc[abnormal_indices, "mask_path"] = pd.Series(mask_paths, index=abnormal_indices)
+
 
     # assert that the right mask files are associated with the right test images
     if len(samples.loc[samples.label_index == LabelName.ABNORMAL]):

@@ -19,7 +19,7 @@ umap-learn==0.5.5
 ipdb
 
 # Logical
-pyswip==0.2.11
+pyswip==0.2.10
 
 # format
 black

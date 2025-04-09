@@ -1,0 +1,110 @@
+[
+    {
+        "defect_name": "missing_top_label",
+        "pixel_value": 255,
+        "saturation_threshold": 70400,
+        "relative_saturation": false
+    },
+    {
+        "defect_name": "missing_bottom_label",
+        "pixel_value": 254,
+        "saturation_threshold": 32700,
+        "relative_saturation": false
+    },
+    {
+        "defect_name": "swapped_labels",
+        "pixel_value": 253,
+        "saturation_threshold": 140800,
+        "relative_saturation": false
+    },
+    {
+        "defect_name": "damaged_label",
+        "pixel_value": 252,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    },
+    {
+        "defect_name": "rotated_label",
+        "pixel_value": 251,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    },
+    {
+        "defect_name": "misplaced_label_top",
+        "pixel_value": 250,
+        "saturation_threshold": 70400,
+        "relative_saturation": false
+    },
+    {
+        "defect_name": "misplaced_label_bottom",
+        "pixel_value": 249,
+        "saturation_threshold": 32700,
+        "relative_saturation": false
+    },
+    {
+        "defect_name": "label_text_incomplete",
+        "pixel_value": 248,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    },
+    {
+        "defect_name": "empty_bottle",
+        "pixel_value": 247,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    },
+    {
+        "defect_name": "wrong_fill_level_too_much",
+        "pixel_value": 246,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    },
+    {
+        "defect_name": "wrong_fill_level_not_enough",
+        "pixel_value": 245,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    },
+    {
+        "defect_name": "misplaced_fruit_icon",
+        "pixel_value": 244,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    },
+    {
+        "defect_name": "missing_fruit_icon",
+        "pixel_value": 243,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    },
+    {
+        "defect_name": "unknown_fruit_icon",
+        "pixel_value": 242,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    },
+    {
+        "defect_name": "incomplete_fruit_icon",
+        "pixel_value": 241,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    },
+    {
+        "defect_name": "wrong_juice_type",
+        "pixel_value": 240,
+        "saturation_threshold": 4500,
+        "relative_saturation": false
+    },
+    {
+        "defect_name": "juice_color",
+        "pixel_value": 239,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    },
+    {
+        "defect_name": "contamination",
+        "pixel_value": 238,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    }
+]
