@@ -12,7 +12,9 @@ def apply_attention_head_mask(model, mask):
 
         def wrap_forward(orig_forward, head_mask=head_mask, layer_idx=layer_idx):
             def new_forward(self, hidden_states, *args, **kwargs):
-             
+                print(f"Executing wrapped attention forward of Layer {layer_idx}")
+
+                print(f"[Layer {layer_idx}] Head mask active: {head_mask is not None}")
                 attn_output, attn_weights, past_key_value = orig_forward(hidden_states, *args, **kwargs)
 
                 #If no mask is used, return the original output directly
@@ -27,9 +29,22 @@ def apply_attention_head_mask(model, mask):
                     H = head_mask.shape[0]
                     head_dim = D // H
                     attn_output = attn_output.view(B, S, H, head_dim)
-                    head_mask_float = head_mask.to(attn_output.device).float().view(1, 1, H, 1)
+                    head_mask_float = head_mask.to(attn_output.device).to(attn_output.dtype).view(1, 1, H, 1)
                     attn_output = attn_output * head_mask_float
                     attn_output = attn_output.view(B, S, D)
+
+                    #apply or not
+                    if head_mask is not None:
+                        with torch.no_grad():
+                            zeroed_heads = (~head_mask).nonzero(as_tuple=False).tolist()
+                            if zeroed_heads:
+                                B, S, D = attn_output.shape
+                                H = head_mask.shape[0]
+                                head_dim = D // H
+                                attn_output_heads = attn_output.view(B, S, H, head_dim)
+                                masked_out = attn_output_heads[:, :, ~head_mask, :]
+                                zero_check = torch.all(masked_out == 0)
+                                print(f"Pruned heads zeroed: {zero_check.item()} | Zeroed heads: {len(zeroed_heads)}")
 
                 return attn_output, attn_weights, past_key_value
 

@@ -30,7 +30,7 @@ model:
   category: ${dataset.category}
   img2txt_db: ${dataset.path}/${dataset.category}/img2text.json
   key_path: ./keys/gpt.json
-  model_vlm: gpt-4o-az # options: [gpt-4o, llava16, gpt-4o-az]
+  model_vlm: gpt-4o-az # options: [gpt-4o, llava16, gpt-4o-az]  or  llava16
   model_llm: gpt-4o-az # options: [gpt-4o, gpt-4o-az]
   model_embedding: text-embedding-3-large-az # options: [text-embedding-3-large, text-embedding-3-large-az]
   temp: 0.05

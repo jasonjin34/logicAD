@@ -69,7 +69,7 @@ def analyze_attention(model, inputs):
     print("Language attention analysis complete.")
     return attn_stats, attention_maps, vision_token_len, total_token_len
 
-def rank_attention_heads(attention_maps, top_k=10):
+def rank_attention_heads(attention_maps, top_k=100):
     """
     # Calculate variance per attention head and select top-k by importance
 
@@ -96,7 +96,7 @@ def rank_attention_heads(attention_maps, top_k=10):
     top_heads = sorted(ranked_heads, key=lambda x: x["variance"], reverse=True)[:top_k]
     return top_heads
 
-def build_attention_head_mask(attention_maps, top_k=None, threshold=None):
+def build_attention_head_mask(attention_maps, top_k=100, threshold=None):
     """
     Build pruning mask for attention heads
     """
@@ -123,8 +123,7 @@ def build_attention_head_mask(attention_maps, top_k=None, threshold=None):
         selected_set = set((h["layer"], h["head"]) for h in head_variances if h["variance"] >= threshold)
     else:
         raise ValueError("Must specify top_k or threshold.")
-
-    # Build the mask: True = keep, False = prune
+    
     mask = torch.zeros((num_layers, num_heads), dtype=torch.bool)
     for l in range(num_layers):
         for h in range(num_heads):

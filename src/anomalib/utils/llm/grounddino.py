@@ -33,9 +33,9 @@ def load_gdino_model(ckpt_path=None, cfg="swint", device="cpu", type="groundingd
         model = build_model(cfg_dict)
         if ckpt_path is None:
             if cfg == "swint":
-                ckpt_path = "./datasets/GroundingDino/groundingdino_swint_ogc.pth"
+                ckpt_path = "D:/MA/LogicAD/datasets/GroundingDino/groundingdino_swint_ogc.pth"
             elif cfg == "swinb":
-                ckpt_path = "./datasets/GroundingDino/groundingdino_swinb.pth"
+                ckpt_path = "D:/MA/LogicAD/datasets/GroundingDino/groundingdino_swinb.pth"
         checkpoint = torch.load(ckpt_path, map_location=device)
         model.load_state_dict(clean_state_dict(checkpoint["model"]), strict=False)
         _ = model.eval()

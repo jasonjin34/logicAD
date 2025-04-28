@@ -108,8 +108,8 @@ def test_raw_inference():
     input_ids = inputs.unsqueeze(0)
     attention_mask = torch.ones_like(input_ids).to(model.device) 
 
-    print("🧾 input_ids shape:", input_ids.shape)
-    print("🖼️ image_tensor shape:", image_tensor.shape)
+    print("input_ids shape:", input_ids.shape)
+    print("image_tensor shape:", image_tensor.shape)
 
     output = model.generate(
         inputs=input_ids,
@@ -117,7 +117,7 @@ def test_raw_inference():
         images=image_tensor,  
         do_sample=True,
         temperature=0.2,
-        max_new_tokens=512
+        max_new_tokens=50
     )
 
     output_text = tokenizer.decode(output[0], skip_special_tokens=True)

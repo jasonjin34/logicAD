@@ -6,6 +6,9 @@ from torch import nn
 import numpy as np
 import os
 from .utils import init_json, update_json 
+from anomalib.utils.llm.vlm import vlm_generate_description
+from anomalib.utils.llm.base import txt2embedding, json2txt
+import json
 
 from .text_prompt import (
     TEXT_EXTRACTOR_PROMPTS,
@@ -39,8 +42,8 @@ class LogicadModel(nn.Module):
         self,
         api_key: str,
         category: str,
-        model_vlm: str = "gpt-4o-az",
-        model_llm: str = "gpt-4o-az",
+        model_vlm: str = "llava16",       #"gpt-4o-az"
+        model_llm: str = "llava16",     #"gpt-4o-az"
         top_p = None,
         temp = None,
         max_token = 300,
@@ -134,7 +137,8 @@ class LogicadModel(nn.Module):
                 for p in patches:
                     patch_text_list = []
                     for _ in range(1):
-                        patch_text = img2text(
+                        patch_text = vlm_generate_description(p, prompt)
+                        """ patch_text = img2text(
                             p, 
                             self.api_key, 
                             query=prompt, 
@@ -145,7 +149,7 @@ class LogicadModel(nn.Module):
                             temperature=self.temp,
                             top_p=self.top_p,
                             seed=self.seed
-                        )
+                        ) """
                         patch_text_list.append(patch_text)
                     test_list_str = str(patch_text_list)
                     summa_query = "select the most frequent text from the list, only give the text"
@@ -160,7 +164,8 @@ class LogicadModel(nn.Module):
                 #     patches, _ = self.generate_crop_img(image_path)
                 #     num_guide = f"Given total number of washer and nut is {len(patches)}l "
                 #     prompt = num_guide + prompt
-                text = img2text(
+                text = vlm_generate_description(image_path, prompt)
+                """ text = img2text(
                     image_path, 
                     self.api_key, 
                     query=prompt, 
@@ -171,10 +176,10 @@ class LogicadModel(nn.Module):
                     temperature=self.temp,
                     top_p=self.top_p,
                     seed=self.seed,
-                )
+                ) """
             return text 
 
-        prompt = self.text_extractor_prompt[self.category]
+        """ prompt = self.text_extractor_prompt[self.category]      
         if image_path in self.img2txt_db_dict:
             text = self.img2txt_db_dict[image_path]
         else:
@@ -190,7 +195,21 @@ class LogicadModel(nn.Module):
                 text = text_retrival(image_path, prompt)
             self.img2txt_db_dict[image_path] = text
             update_json(self.img2txt_db_path, self.img2txt_db_dict)
+        return text """
+        prompt = self.text_extractor_prompt[self.category]
+        if self.num_text_extraction > 1:
+            text_list = []
+            for _ in range(self.num_text_extraction):
+                text_list.append(text_retrival(image_path, prompt))
+            print(text_list)
+            test_list_str = str(text_list)
+            query = "select the most frequently and probably text from the list, only give the text"
+            text = txt2txt(test_list_str, api_key=self.api_key, model=self.model_llm, query=query).replace('"', '')
+        else:
+            text = text_retrival(image_path, prompt)
+
         return text
+
 
     def text_summation(self, image_path, template="",):
         """
@@ -200,6 +219,7 @@ class LogicadModel(nn.Module):
             template = self.text_summation_prompt[self.category]
         
         text = self.text_extraction(image_path)
+        print(f"!!!!!!!!!!!!!!!!!!!! [text_extraction] for {image_path}:\n{text}")
         
         if self.wo_summation:
             return text
@@ -211,6 +231,14 @@ class LogicadModel(nn.Module):
                 model=self.model_llm,
                 seed=self.seed,
             )
+            try:
+                parsed = json.loads(summary)
+            except Exception:
+                print(f"Summarization failed to return JSON: {summary}")
+                return self.fallback_json()
+
+            if all(v == "none" or v == 0 for v in parsed.values()):
+                print(f"Summary for {image_path} is empty: {summary}")
             return summary
     
     def text_embedding(
@@ -225,6 +253,8 @@ class LogicadModel(nn.Module):
             text = self.text_extraction(image_path)
         else:
             text = input_text
+
+        text = json2txt(text)      
         embedding = txt2embedding(input_text=text, api_key=self.api_key, model=self.model_embedding)
         return embedding
     

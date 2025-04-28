@@ -5,6 +5,7 @@ import json
 import os
 from openai import OpenAI
 import torch
+import re
 
 from numpy import dot
 import numpy as np
@@ -43,6 +44,23 @@ def cos_sim(a, b):
     cos_sim = dot(a, b) / (norm(a) * norm(b))
     return cos_sim
 
+def json2txt(json_str: str, values_only: bool = False) -> str:
+    """
+    Convert a JSON string into structure-aware text, preserving the original field order
+    """
+    try:
+        data = json.loads(json_str) 
+    except json.JSONDecodeError:
+        return json_str
+
+    if values_only:
+        return "\n".join([str(v).strip() for v in data.values()])
+    else:
+        lines = []
+        for key, value in data.items():
+            key_readable = key.replace("_", " ").capitalize()
+            lines.append(f"{key_readable}: {value}")
+        return "\n".join(lines)
 
 def key_extraction(file_path, key_name="gpt"):
     if os.path.exists(file_path) is False:

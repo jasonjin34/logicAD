@@ -81,6 +81,7 @@ class Logicad(AnomalyModule):
         self.reference_images = self.reference_images[: self.k_shot]
         for path in self.reference_images:
             # get list logic summation text of reference images
+            print(f"🖼️ Doing logic summarization for {path}")
             text_summation = self.model.text_summation(path)
             self.reference_summation.append(text_summation)
             embedding = self.model.text_embedding(input_text=text_summation)
