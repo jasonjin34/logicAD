@@ -1,8 +1,14 @@
 {
-  "color matching": "yes",
-  "juice status": "full",
-  "top sticker": "correct",
-  "bottom sticker": "correct",
-  "symmetrical": "yes",
-  "number of stickers": 2
+  "color_matching": "yes",
+  "juice_status": "full",
+  "number_of_stickers": 2,
+  "top_sticker_shape": "square",
+  "top_sticker_has_fruit": "yes",
+  "top_sticker_fruit_matches_juice": "yes",
+  "top_sticker_fruit_centered": "yes",
+  "top_sticker_distance_from_neck": "less than an inch",
+  "top_sticker_horizontal_shift": "centered",
+  "bottom_sticker_has_100_percent_juice": "yes",
+  "bottom_sticker_position": "bottom",
+  "bottom_sticker_horizontal_shift": "centered"
 }

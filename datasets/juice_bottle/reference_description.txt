@@ -1,1 +1,18 @@
-**orange**
+- **Color of the juice:** Yellow  
+- **Fruit shown on the bottle:** Orange  
+- **Does the juice color match the fruit?** Yes  
+- **How full is the juice in the bottle?** Full (at least half the neck)  
+- **How many stickers are on the bottle?** Two  
+
+**Top sticker:**  
+- **Is it square in shape?** Yes  
+- **Does it contain a fruit image?** Yes  
+- **Does the fruit match the juice type?** Yes  
+- **Is the fruit image centered both horizontally and vertically?** Yes  
+- **How far is the top square sticker from the neck?** Close to the neck  
+- **Is the top sticker horizontally shifted to right or left?** No  
+
+**Bottom sticker:**  
+- **Does it contain the words '100% juice'?** Yes  
+- **Where is the bottom sticker placed?** Bottom  
+- **Is the bottom sticker horizontally shifted to right or left?** No  

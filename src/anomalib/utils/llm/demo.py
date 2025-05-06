@@ -32,7 +32,7 @@ from anomalib.models.logicad.text_prompt import (
 
 #path
 TRAIN_IMAGE_PATH = "D:/MA/LogicAD/datasets/juice_bottle/train/good/000.png"
-TEST_IMAGE_PATH = "D:/MA/LogicAD/datasets/juice_bottle/test/logical_anomaliesd/000.png"
+TEST_IMAGE_PATH = "D:/MA/LogicAD/datasets/juice_bottle/test/logical_anomalies/055.png"
 REFERENCE_DESC_PATH = "D:/MA/LogicAD/datasets/juice_bottle/reference_description.txt"
 REFERENCE_EMBEDDING_PATH = "D:/MA/LogicAD/datasets/juice_bottle/reference_embedding.npy"
 REFERENCE_JSON_PATH = "D:/MA/LogicAD/datasets/juice_bottle/reference_summary.json"
@@ -93,7 +93,7 @@ def generate_and_save_reference(train_image_path):
     return embedding_ref, summary_json
 
 
-def test_inference(test_image_path, reference_embedding):
+def test_inference(test_image_path, reference_embedding,summary_json_train):
 
     prompt = TEXT_EXTRACTOR_PROMPTS[CATEGORY]
     #test_description = vlm_generate_description(test_image_path, prompt=prompt)
@@ -147,9 +147,9 @@ def test_inference(test_image_path, reference_embedding):
     else:
         print("All fields match.")
 
-    diffs = compare_json_values(summary_json_train, summary_json)  
+    #diffs = compare_json_values(summary_json_train, summary_json)  
     #visualization
-    create_comparison_visual(TRAIN_IMAGE_PATH, test_image_path, score, diffs)
+    #create_comparison_visual(TRAIN_IMAGE_PATH, test_image_path, score, diffs)
 
     return score
 
@@ -280,4 +280,4 @@ if __name__ == "__main__":
         with open(REFERENCE_DESC_PATH.replace("reference_description.txt", "reference_summary.json"), "r", encoding="utf-8") as f:
             summary_json_train = f.read()
 
-    test_inference(TEST_IMAGE_PATH, reference_embedding)
+    test_inference(TEST_IMAGE_PATH, reference_embedding, summary_json_train)
