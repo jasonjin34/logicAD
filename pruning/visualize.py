@@ -11,4 +11,6 @@ def visualize_head_mask(head_mask, title="Attention Head Mask (Black = Pruned, W
     plt.xlabel("Head Index")
     plt.ylabel("Layer Index")
     plt.title(title)
-    plt.show()
+    #plt.show()
+    plt.savefig("/home/students/yuehan/projects/logicAD/pruning/head_mask.png")
+    print("Saved head mask visualization to head_mask.png")

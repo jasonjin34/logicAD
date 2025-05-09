@@ -6,7 +6,7 @@ from torch import nn
 import numpy as np
 import os
 from .utils import init_json, update_json 
-from anomalib.utils.llm.vlm import vlm_generate_description
+#from anomalib.utils.llm.vlm import vlm_generate_description
 from anomalib.utils.llm.base import txt2embedding, json2txt
 import json
 

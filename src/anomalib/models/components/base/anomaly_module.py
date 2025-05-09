@@ -14,7 +14,7 @@ from warnings import warn
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
+#from pytorch_lightning.utilities.types import EPOCH_OUTPUT, STEP_OUTPUT
 from torch import Tensor, nn
 from torchmetrics import Metric
 
@@ -67,7 +67,7 @@ class AnomalyModule(pl.LightningModule, ABC):
 
         return self.model(batch)
 
-    def validation_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> STEP_OUTPUT:
+    def validation_step(self, batch: dict[str, str | Tensor], *args, **kwargs) -> Any:
         """To be implemented in the subclasses."""
         raise NotImplementedError
 
@@ -105,7 +105,7 @@ class AnomalyModule(pl.LightningModule, ABC):
                 outputs["box_labels"] = [labels.int() for labels in is_anomalous]
         return outputs
 
-    def test_step(self, batch: dict[str, str | Tensor], batch_idx: int, *args, **kwargs) -> STEP_OUTPUT:
+    def test_step(self, batch: dict[str, str | Tensor], batch_idx: int, *args, **kwargs) -> Any:
         """Calls validation_step for anomaly map/score calculation.
 
         Args:
@@ -120,7 +120,7 @@ class AnomalyModule(pl.LightningModule, ABC):
 
         return self.predict_step(batch, batch_idx)
 
-    def validation_step_end(self, val_step_outputs: STEP_OUTPUT, *args, **kwargs) -> STEP_OUTPUT:
+    def validation_step_end(self, val_step_outputs: Any, *args, **kwargs) -> Any:
         """Called at the end of each validation step."""
         del args, kwargs  # These variables are not used.
 
@@ -128,7 +128,7 @@ class AnomalyModule(pl.LightningModule, ABC):
         self._post_process(val_step_outputs)
         return val_step_outputs
 
-    def test_step_end(self, test_step_outputs: STEP_OUTPUT, *args, **kwargs) -> STEP_OUTPUT:
+    def test_step_end(self, test_step_outputs: Any, *args, **kwargs) -> Any:
         """Called at the end of each test step."""
         del args, kwargs  # These variables are not used.
 
@@ -136,7 +136,7 @@ class AnomalyModule(pl.LightningModule, ABC):
         self._post_process(test_step_outputs)
         return test_step_outputs
 
-    def validation_epoch_end(self, outputs: EPOCH_OUTPUT) -> None:
+    def validation_epoch_end(self, outputs: Any) -> None:
         """Compute threshold and performance metrics.
 
         Args:
@@ -147,7 +147,7 @@ class AnomalyModule(pl.LightningModule, ABC):
         self._collect_outputs(self.image_metrics, self.pixel_metrics, outputs)
         self._log_metrics()
 
-    def test_epoch_end(self, outputs: EPOCH_OUTPUT) -> None:
+    def test_epoch_end(self, outputs: Any) -> None:
         """Compute and save anomaly scores of the test set.
 
         Args:
@@ -156,7 +156,7 @@ class AnomalyModule(pl.LightningModule, ABC):
         self._collect_outputs(self.image_metrics, self.pixel_metrics, outputs)
         self._log_metrics()
 
-    def _compute_adaptive_threshold(self, outputs: EPOCH_OUTPUT) -> None:
+    def _compute_adaptive_threshold(self, outputs: Any) -> None:
         self.image_threshold.reset()
         self.pixel_threshold.reset()
         self._collect_outputs(self.image_threshold, self.pixel_threshold, outputs)
@@ -173,7 +173,7 @@ class AnomalyModule(pl.LightningModule, ABC):
     def _collect_outputs(
         image_metric: AnomalibMetricCollection,
         pixel_metric: AnomalibMetricCollection,
-        outputs: EPOCH_OUTPUT,
+        outputs: Any,
     ) -> None:
         for output in outputs:
             image_metric.cpu()
@@ -183,7 +183,7 @@ class AnomalyModule(pl.LightningModule, ABC):
                 pixel_metric.update(torch.squeeze(output["anomaly_maps"]), torch.squeeze(output["mask"].int()))
 
     @staticmethod
-    def _post_process(outputs: STEP_OUTPUT) -> None:
+    def _post_process(outputs: Any) -> None:
         """Compute labels based on model predictions."""
         if isinstance(outputs, dict):
             if "pred_scores" not in outputs and "anomaly_maps" in outputs:

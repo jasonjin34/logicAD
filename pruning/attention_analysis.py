@@ -11,7 +11,7 @@ def analyze_attention(model, inputs):
             if isinstance(output, tuple) and len(output) > 1:
                 attn = output[1]
                 if isinstance(attn, torch.Tensor) and attn.dim() == 4:
-                    print(f"[hook] Captured {layer_name} attention: shape = {attn.shape}")
+                    # print(f"[hook] Captured {layer_name} attention: shape = {attn.shape}")
                     attention_scores[layer_name] = attn.detach().cpu()
                 else:
                     print(f"[hook] {layer_name} returned invalid tensor or shape")
@@ -23,7 +23,7 @@ def analyze_attention(model, inputs):
         for idx, layer in enumerate(model.model.layers):
             name = f"language_layer_{idx}.self_attn"
             hooks.append(layer.self_attn.register_forward_hook(hook_fn(name)))
-            print(f"[register] Hooking {name}")
+            # print(f"[register] Hooking {name}")
     except AttributeError as e:
         print(f"language hook error {e}")
         return {}, [], 0, 0
@@ -69,16 +69,17 @@ def analyze_attention(model, inputs):
     print("Language attention analysis complete.")
     return attn_stats, attention_maps, vision_token_len, total_token_len
 
+
 def rank_attention_heads(attention_maps, top_k=100):
     """
     # Calculate variance per attention head and select top-k by importance
 
-        top_heads: List[Dict]：
-            {
-                "layer": int,
-                "head": int,
-                "variance": float
-            }
+    top_heads: List[Dict]：
+    {
+        "layer": int,
+        "head": int,
+        "variance": float
+    }
     """
     ranked_heads = []
     for layer_idx, attn_tensor in enumerate(attention_maps):
@@ -96,14 +97,15 @@ def rank_attention_heads(attention_maps, top_k=100):
     top_heads = sorted(ranked_heads, key=lambda x: x["variance"], reverse=True)[:top_k]
     return top_heads
 
+
 def build_attention_head_mask(attention_maps, top_k=100, threshold=None):
     """
     Build pruning mask for attention heads
     """
     num_layers = len(attention_maps)
     num_heads = attention_maps[0].shape[1] if attention_maps[0] is not None else 0
-    head_variances = []
 
+    head_variances = []
     for layer_idx, attn in enumerate(attention_maps):
         if attn is None:
             continue
@@ -117,13 +119,13 @@ def build_attention_head_mask(attention_maps, top_k=100, threshold=None):
             })
 
     if top_k is not None:
-        selected = sorted(head_variances, key=lambda x: x["variance"], reverse=True)[:top_k]
+        selected = sorted(head_variances, key=lambda x: x["variance"])[:top_k]
         selected_set = set((h["layer"], h["head"]) for h in selected)
     elif threshold is not None:
         selected_set = set((h["layer"], h["head"]) for h in head_variances if h["variance"] >= threshold)
     else:
         raise ValueError("Must specify top_k or threshold.")
-    
+
     mask = torch.zeros((num_layers, num_heads), dtype=torch.bool)
     for l in range(num_layers):
         for h in range(num_heads):

@@ -1,4 +1,5 @@
-# this is the utils function for the LLM based model and algorithm
+ # this is the utils function for the LLM based model and algorithm
+
 import base64
 import requests
 import json
@@ -6,7 +7,6 @@ import os
 from openai import OpenAI
 import torch
 import re
-
 from numpy import dot
 import numpy as np
 from numpy.linalg import norm
@@ -44,12 +44,11 @@ def cos_sim(a, b):
     cos_sim = dot(a, b) / (norm(a) * norm(b))
     return cos_sim
 
+
 def json2txt(json_str: str, values_only: bool = False) -> str:
-    """
-    Convert a JSON string into structure-aware text, preserving the original field order
-    """
+    """Convert a JSON string into structure-aware text, preserving the original field order"""
     try:
-        data = json.loads(json_str) 
+        data = json.loads(json_str)
     except json.JSONDecodeError:
         return json_str
 
@@ -62,12 +61,13 @@ def json2txt(json_str: str, values_only: bool = False) -> str:
             lines.append(f"{key_readable}: {value}")
         return "\n".join(lines)
 
+
 def key_extraction(file_path, key_name="gpt"):
     if os.path.exists(file_path) is False:
         raise FileNotFoundError(f"GPT api key file not found: {file_path}")
     with open(file_path, "r") as f:
         data = json.load(f)
-        key = data[key_name]
+    key = data[key_name]
     return key
 
 
@@ -84,19 +84,15 @@ def resize_image(image, img_size=None):
         return img
 
 
-# Function to encode the image
 def encode_image(image, image_format="png", img_size=None):
-    """
-    convert the code to base64
-    """
+    """convert the code to base64"""
     if isinstance(image, str):  # if the image is a path
         image_path = image
         img = resize_image(image_path, img_size=img_size)
         img = image2base64(img, image_format=image_format)
-        # img = base64.b64encode(img).decode("utf-8")
     else:  # if the image is a numpy array or tensor
         if isinstance(image, torch.Tensor):
-            # convert B, C, H, W to  H, W, C as numpy format
+            # convert B, C, H, W to H, W, C as numpy format
             image = image.squeeze(0).permute(1, 2, 0).numpy()
         img = image2base64(image, image_format=image_format)
     return img
@@ -107,6 +103,8 @@ def img2text(
     api_key,
     model_name="gpt-4o-az",  # gpt-4o, gpt-4o-az, llava
     model=None,
+    tokenizer=None,
+    image_processor=None,
     query="How many pushpins are there?",
     temperature=0.1,
     top_p=0.1,
@@ -128,9 +126,9 @@ def img2text(
         else:
             api_key = key_extraction(api_key)
             endpoint = "https://api.openai.com/v1/chat/completions"
+
         # Getting the base64 string
         base64_image = encode_image(image, img_size=img_size)
-
         image_query = {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
 
         if isinstance(query, list):
@@ -143,9 +141,7 @@ def img2text(
             "messages": [
                 {
                     "role": "system",
-                    "content": [
-                        {"type": "text", "text": "You are an AI assistant that helps people find information."}
-                    ],
+                    "content": [{"type": "text", "text": "You are an AI assistant that helps people find information."}],
                 },
                 {
                     "role": "user",
@@ -158,6 +154,7 @@ def img2text(
             payload["temperature"] = temperature
         if top_p is not None:
             payload["top_p"] = top_p
+
         if model_name == "gpt-4o":
             payload["model"] = "gpt-4o"
             headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
@@ -166,12 +163,20 @@ def img2text(
 
         try:
             response = requests.post(endpoint, headers=headers, json=payload)
-            output = response.json()["choices"][0]["message"]["content"]
+            response_json = response.json()
+            output = response_json["choices"][0]["message"]["content"]
         except Exception as e:
             print(f"Have problem in extracting text, Error in the request: {e}")
             output = None
     else:
-        output = llava_inference(model=model, prompt=query, path=image, max_new_tokens=max_tokens)
+        output = llava_inference(
+            model=model,
+            image_processor=image_processor,
+            tokenizer=tokenizer,
+            prompt=query,
+            path=image,
+            max_new_tokens=max_tokens,
+        )
         # only extract the answer
         output = output.split("\nASSISTANT")[-1][2:]
 
@@ -181,19 +186,15 @@ def img2text(
 def load_azure_openai_client(api_key, model_name_key="gpt-4o"):
     api_dict = key_extraction(api_key, key_name="gpt-az")
     client = AzureOpenAI(
-        api_key=api_dict["key"], api_version=api_dict["api_version"], azure_endpoint=api_dict["azure_endpoint"]
+        api_key=api_dict["key"],
+        api_version=api_dict["api_version"],
+        azure_endpoint=api_dict["azure_endpoint"]
     )
     return {"client": client, "model_name": api_dict[model_name_key]}
 
 
-def txt2embedding(
-    input_text="",
-    api_key=None,
-    model="text-embedding-3-large",
-):
-    """
-    use openai to get the embedding of the text
-    """
+def txt2embedding(input_text="", api_key=None, model="text-embedding-3-large"):
+    """use openai to get the embedding of the text"""
     assert model in ["text-embedding-3-large", "text-embedding-3-large-az"], "model not supported"
 
     if model == "text-embedding-3-large-az":
@@ -201,10 +202,11 @@ def txt2embedding(
         client, model = output["client"], output["model_name"]
     else:
         api_key = key_extraction(api_key)
-        client = OpenAI(api_key=key_extraction(api_key))
+        client = OpenAI(api_key=api_key)
 
     response = client.embeddings.create(input=input_text, model=model)
     return response.data[0].embedding
+
 
 def txt2txt(
     input_text="",
@@ -215,12 +217,7 @@ def txt2txt(
     top_p=0,
     temp=0,
 ):
-    """
-    use openai to get the summarization of the text
-    # "select the most representative sentence, please only give the sentence",
-    or 
-    select one of th sentence from the list with the most share feature, please only give the sentences
-    """
+    """use openai to get the summarization of the text"""
     if isinstance(input_text, list):
         input_text = input_text[0]
 
@@ -238,14 +235,10 @@ def txt2txt(
     else:
         raise ValueError("model not supported")
 
-    # response_format={"type": "json_object"},
     response = client.chat.completions.create(
         model=model,
         messages=[
-            {
-                "role": "system",
-                "content": system_message,
-            },
+            {"role": "system", "content": system_message},
             {"role": "user", "content": f"{query}, {input_text}"},
         ],
         top_p=top_p,
@@ -264,15 +257,13 @@ def txt2sum(
     few_shot_message="",
     api_key=None,
     model="gpt-4o",
-    system_message= "You are a helpful assistant designed to output JSON.",
+    system_message="You are a helpful assistant designed to output JSON.",
     seed=42,
     max_token=200,
     top_p=None,
     temp=None,
 ):
-    """
-    use openai to get the summarization of the text
-    """ 
+    """use openai to get the summarization of the text"""
     if top_p is None:
         top_p = NotGiven
     if temp is None:
@@ -291,14 +282,10 @@ def txt2sum(
         model=model,
         response_format={"type": "json_object"},
         messages=[
-            {
-                "role": "system",
-                "content": system_message,
-            },
+            {"role": "system", "content": system_message},
             {"role": "user", "content": f"Can you summarize as following format, {few_shot_message}? {input_text}"},
         ],
-        top_p=0.05
-        # seed=seed,
+        top_p=0.05,
     )
 
     try:
@@ -308,16 +295,8 @@ def txt2sum(
     return output
 
 
-def txt2formal(
-    api_key,
-    model="gpt-4o",
-    max_token=100,
-    **prompt,
-):
-    """
-    use openai to get the formalization of the text
-    """
-
+def txt2formal(api_key, model="gpt-4o", max_token=100, **prompt):
+    """use openai to get the formalization of the text"""
     if model == "gpt-4o-az":
         output = load_azure_openai_client(api_key)
         client, model = output["client"], output["model_name"]
@@ -329,24 +308,13 @@ def txt2formal(
 
     prompt0 = prompt["prompt"]
     syn_rules = prompt["syn_rules"]
-
-    if prompt.get("k_shot", True):
-        k_shot = prompt["k_shot"]
-    else:
-        k_shot = ""
-
-    if prompt.get("query", True):
-        query = prompt["query"]
-    else:
-        query = ""
+    k_shot = prompt.get("k_shot", "")
+    query = prompt.get("query", "")
 
     response = client.chat.completions.create(
         model=model,
         messages=[
-            {
-                "role": "user",
-                "content": prompt0 + syn_rules + k_shot + query,
-            }
+            {"role": "user", "content": prompt0 + syn_rules + k_shot + query}
         ],
         max_tokens=max_token,
     )
