@@ -1,0 +1,26 @@
+seed: 42
+compute_openvino: false
+hardware:
+  - gpu
+writer:
+  - csv
+  # - tensorboard
+grid_search:
+  dataset:
+    name: visa
+    category:
+      - candle
+      - capsules
+      - cashew
+      - chewinggum
+      - fryum
+      - macaroni1
+      - macaroni2
+      - pcb1
+      - pcb2
+      - pcb3
+      - pcb4
+      - pipe_fryum
+    image_size: [448]
+  model_name:
+    - gemad

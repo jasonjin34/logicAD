@@ -1,0 +1,87 @@
+---
+jupyter:
+  jupytext:
+    formats: ipynb,Rmd
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.16.2
+  kernelspec:
+    display_name: Python 3 (ipykernel)
+    language: python
+    name: python3
+---
+
+```{python}
+# %load_ext autoreload
+# %autoreload 2
+
+from anomalib.utils.llm import img2text, txt2sum
+```
+
+```{python}
+# test juice bottle
+path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini/juice_bottle/train/good/001.png"
+
+query = "Describe this juice bottle's characteristics, is the bottle full? locations of label and is objects"
+
+api = "/home/erjin/git/Logic_AD_LLM/keys/gpt.json"
+```
+
+```{python}
+path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec/cable/test/combined/007.png"
+img2text(path, api, query="describe this cable image")["choices"][0]["message"]["content"]
+```
+
+```{python}
+text = img2text(path, api, query=query)["choices"][0]["message"]["content"]
+```
+
+```{python}
+text
+```
+
+```{python}
+txt2sum(text, few_shot_message="location of objects, color of objects", api_key=api)
+```
+
+```{python}
+# test with pushpings
+# Fail GPT can not really solve the counting issue, using WinCLIP inspired methods to generate seious of text
+
+path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini/pushpins/train/good/001.png"
+query = "describe this image"
+
+img2text(path, api, query=query)
+```
+
+```{python}
+# test with screw bag, effects are ok 
+
+path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini/screw_bag/train/good/009.png"
+query = "What are inside the bag"
+
+text = img2text(path, api, query=query)["choices"][0]["message"]["content"]
+print(text)
+txt2sum(text, few_shot_message="number of objects, ... bolt description", api_key=api)
+```
+
+```{python}
+# test with splicing connectors
+
+path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini/splicing_connectors/train/good/001.png"
+path = "/home/erjin/git/Logic_AD_LLM/datasets/MVTec_Loco/mini/splicing_connectors/test/logical_anomalies/061.png"
+query = "describe objects in shape, symmetric, broken and location, distance between two connectors equal the distance of cable"
+
+text = img2text(path, api, query=query)["choices"][0]["message"]["content"]
+print(text)
+```
+
+```{python}
+txt2sum(text, few_shot_message="connector: symmetric or not along, cable: {symmetric:, broken or not, longer than connectors?}", api_key=api)
+```
+
+```{python}
+text
+```

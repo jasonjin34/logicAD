@@ -1,0 +1,29 @@
+seed: 42
+compute_openvino: false
+hardware:
+  - gpu
+writer:
+  - csv
+  # - tensorboard
+grid_search:
+  dataset:
+    name: mvtec
+    category:
+      - bottle
+      - cable
+      - capsule
+      - carpet
+      - grid
+      - hazelnut
+      - leather
+      - metal_nut
+      - pill
+      - screw
+      - tile
+      - toothbrush
+      - transistor
+      - wood
+      - zipper
+    image_size: [448]
+  model_name:
+    - sclipad
