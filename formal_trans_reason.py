@@ -10,7 +10,7 @@ from formal_prompts_spec import PROMPT0, RULE, two_shot_dict, lang_rules_dict
 json_repo = "/Users/fengqihui/Documents/GitHub/logicAD/datasets/repo_img2text/"
 json_path = "datasets/juice_bottle/img2text_new.json"
 
-API_KEY = "sk-proj-mHskLBkbfFVMrlUQp4zoT3BlbkFJ9MicDBooQGIBm4JnVk3o"
+API_KEY = ""  # TODO: Add your API key here or use environment variable
 
 def txt2formal(
     api_key,

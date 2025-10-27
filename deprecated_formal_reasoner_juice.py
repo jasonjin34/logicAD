@@ -13,8 +13,7 @@ from sklearn.metrics import precision_recall_curve, roc_auc_score
 
 from openai import OpenAI
 
-api_key= "sk-proj-mHskLBkbfFVMrlUQp4zoT3BlbkFJ9MicDBooQGIBm4JnVk3o"
-# api_key = "sk-None-tjeQnRKVhynfaP77sYMHT3BlbkFJO8hPOtlwVM7pgkzy8qnn"
+api_key = ""  # TODO: Add your API key here or use environment variable
 model="gpt-4o"
 max_token=30
 client = OpenAI(api_key=api_key)
